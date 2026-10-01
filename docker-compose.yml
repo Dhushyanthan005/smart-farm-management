@@ -1,0 +1,54 @@
+services:
+  # ============================================================================
+  # PostgreSQL Database Service
+  # ============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: dairyflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-dairyflow_db}
+      POSTGRES_USER: ${DATABASE_USERNAME:-dairyflow_user}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-dairyflow_secret_password}
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME:-dairyflow_user} -d ${DATABASE_NAME:-dairyflow_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dairyflow-network
+
+  # ============================================================================
+  # Redis Cache Service
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: dairyflow-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dairyflow-network
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+
+networks:
+  dairyflow-network:
+    driver: bridge

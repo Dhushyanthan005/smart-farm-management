@@ -1,0 +1,57 @@
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+*.swp
+*.swo
+*~
+.classpath
+.project
+.settings/
+
+# Backend Build & Artifacts
+backend/target/
+backend/.mvn/
+backend/*.log
+backend/logs/
+
+# Frontend Build & Dependencies
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.turbo/
+frontend/.pnpm-store/
+
+# Package Manager Locks & Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Database & Storage runtime data
+data/
+pgdata/
+redisdata/
+localstorage/
+
+# Temporary files
+tmp/
+temp/
+*.tmp

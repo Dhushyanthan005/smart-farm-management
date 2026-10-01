@@ -1,0 +1,11 @@
+import { Role } from "@/types/auth";
+
+export const ROLES: Record<string, Role> = {
+  OWNER: "ROLE_OWNER",
+  ADMIN: "ROLE_ADMIN",
+  MANAGER: "ROLE_MANAGER",
+  VETERINARIAN: "ROLE_VETERINARIAN",
+  WORKER: "ROLE_WORKER",
+  DELIVERY_STAFF: "ROLE_DELIVERY_STAFF",
+  CUSTOMER: "ROLE_CUSTOMER",
+};
