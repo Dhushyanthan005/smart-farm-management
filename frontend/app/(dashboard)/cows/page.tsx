@@ -1,80 +1,162 @@
 "use client";
 
-import React, { useState } from "react";
-import { PageHeader } from "@/components/common/page-header";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { CowCard } from "@/features/cows";
-import { useCows } from "@/features/cows";
-import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { EmptyState } from "@/components/common/empty-state";
-import { Plus, Search } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import {
+  CowStatsBanner,
+  CowFilterToolbar,
+  CowTable,
+  CowTelemetryFooter,
+  CowProfileModal,
+  MOCK_STITCH_COWS,
+  StitchCow,
+  useCows,
+} from "@/features/cows";
 
 export default function CowsPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
-  const { data, isLoading } = useCows(0, 20, statusFilter);
+  const router = useRouter();
 
-  const cows = data?.data?.content || [];
+  // TanStack Query API connection (preserved)
+  const { data: apiData, isLoading } = useCows(0, 20);
+
+  // Filter and search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStage, setSelectedStage] = useState("All");
+  const [selectedHealth, setSelectedHealth] = useState("All");
+  const [selectedBarn, setSelectedBarn] = useState("All");
+  const [selectedParity, setSelectedParity] = useState("All");
+
+  // Profile modal state
+  const [activeProfileCow, setActiveProfileCow] = useState<StitchCow | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Filter dataset
+  const filteredCows = useMemo(() => {
+    return MOCK_STITCH_COWS.filter((cow) => {
+      // Search
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesTag = cow.tagNumber.toLowerCase().includes(q);
+        const matchesName = cow.name.toLowerCase().includes(q);
+        const matchesRfid = cow.rfid.toLowerCase().includes(q);
+        if (!matchesTag && !matchesName && !matchesRfid) return false;
+      }
+
+      // Lactation stage
+      if (selectedStage !== "All" && cow.lactationStage !== selectedStage) {
+        return false;
+      }
+
+      // Health status
+      if (selectedHealth !== "All" && cow.healthStatus !== selectedHealth) {
+        return false;
+      }
+
+      // Barn
+      if (selectedBarn !== "All" && !cow.currentPen.includes(selectedBarn)) {
+        return false;
+      }
+
+      // Parity
+      if (selectedParity !== "All") {
+        if (selectedParity === "4+" && cow.parity < 4) return false;
+        if (selectedParity !== "4+" && cow.parity.toString() !== selectedParity) return false;
+      }
+
+      return true;
+    });
+  }, [searchQuery, selectedStage, selectedHealth, selectedBarn, selectedParity]);
+
+  const handleResetFilters = () => {
+    setSearchQuery("");
+    setSelectedStage("All");
+    setSelectedHealth("All");
+    setSelectedBarn("All");
+    setSelectedParity("All");
+  };
+
+  const handleViewProfile = (cow: StitchCow) => {
+    setActiveProfileCow(cow);
+    setIsProfileOpen(true);
+  };
+
+  const handleLogMilk = (cow: StitchCow) => {
+    router.push(`/milk?cow=${encodeURIComponent(cow.tagNumber)}`);
+  };
+
+  const handleAddHealthNote = (cow: StitchCow) => {
+    router.push(`/health?cow=${encodeURIComponent(cow.tagNumber)}`);
+  };
+
+  const handleBreedCow = (cow: StitchCow) => {
+    router.push(`/breeding?cow=${encodeURIComponent(cow.tagNumber)}`);
+  };
+
+  const handleExportCsv = () => {
+    const headers = "Tag,Name,RFID,Breed,Age,Parity,DIM,Yield,SCC,ReproStatus,Pen\n";
+    const rows = filteredCows
+      .map(
+        (c) =>
+          `"${c.tagNumber}","${c.name}","${c.rfid}","${c.breed}","${c.age}",${c.parity},"${c.dim ?? ""}",${c.todayYield ?? ""},"${c.sccValue}","${c.reproStatus}","${c.currentPen}"`
+      )
+      .join("\n");
+    const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "dairyflow_herd_registry.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Herd Management"
-        description="Comprehensive livestock registry, ear-tag tracking, and animal lifecycle management."
-      >
-        <Button size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Register Cow
-        </Button>
-      </PageHeader>
+    <div className="flex flex-col min-h-screen bg-[#F8F9F6]">
+      {/* Subheader: Breadcrumbs, Scope, Batch Actions & Counter */}
+      <CowStatsBanner
+        onBulkInsemination={() => router.push("/breeding")}
+        onMovePen={() => alert("Select animals in table and choose destination pen.")}
+        onExportCsv={handleExportCsv}
+        onRegisterCow={() => alert("Open cow registration modal or navigate to create cow form.")}
+      />
 
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Search ear tag or name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+      {/* Quick Search and Filter Strip */}
+      <CowFilterToolbar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedStage={selectedStage}
+        onStageChange={setSelectedStage}
+        selectedHealth={selectedHealth}
+        onHealthChange={setSelectedHealth}
+        selectedBarn={selectedBarn}
+        onBarnChange={setSelectedBarn}
+        selectedParity={selectedParity}
+        onParityChange={setSelectedParity}
+        onReset={handleResetFilters}
+      />
 
-        <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1">
-          {["ALL", "LACTATING", "DRY", "PREGNANT", "SICK"].map((status) => (
-            <Button
-              key={status}
-              variant={(!statusFilter && status === "ALL") || statusFilter === status ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter(status === "ALL" ? undefined : status)}
-            >
-              {status}
-            </Button>
-          ))}
-        </div>
+      {/* Table Canvas & Telemetry Area */}
+      <div className="flex-1 p-4 flex flex-col justify-between space-y-4">
+        {/* Data Matrix */}
+        <CowTable
+          cows={filteredCows}
+          onViewProfile={handleViewProfile}
+          onAddHealthNote={handleAddHealthNote}
+          onLogMilk={handleLogMilk}
+          onBreedCow={handleBreedCow}
+        />
+
+        {/* Quick Triage Bottom Telemetry Strip */}
+        <CowTelemetryFooter onReviewEstrus={() => router.push("/breeding")} />
       </div>
 
-      {isLoading ? (
-        <LoadingSpinner />
-      ) : cows.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {cows.map((cow) => (
-            <CowCard key={cow.id} cow={cow} />
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          title="No cows registered yet"
-          description="Begin by registering your first cow into the DairyFlow herd registry."
-          action={
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Register Cow
-            </Button>
-          }
-        />
-      )}
+      {/* Cow Profile Modal (Stitch Screen 3: Aurora #1042) */}
+      <CowProfileModal
+        cow={activeProfileCow}
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        onLogVetCheck={(cow) => router.push(`/health?cow=${encodeURIComponent(cow.tagNumber)}`)}
+      />
     </div>
   );
 }

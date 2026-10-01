@@ -11,14 +11,21 @@
   --primary: #1E3A2F;
   --primary-foreground: #FFFFFF;
   --primary-hover: #162B23;
+  --primary-container: #1b4332;
+  --primary-fixed: #c1ecd4;
 
   /* Olive Accent / Secondary */
   --secondary: #4D6A42;
   --secondary-foreground: #FFFFFF;
+  --secondary-container: #92f7c3;
 
   /* White Card Surface */
   --card: #FFFFFF;
   --card-foreground: #1F2421;
+  --surface-container-lowest: #FFFFFF;
+  --surface-container-low: #F4F6F2;
+  --surface-container: #EAECE7;
+  --surface-container-high: #E2E5DF;
 
   /* Muted neutrals */
   --muted: #EAECE7;
@@ -31,11 +38,53 @@
 
   --accent: #E8EFE5;
   --accent-foreground: #1E3A2F;
+
+  /* Alerts */
+  --error: #BA1A1A;
+  --error-container: #FFDAD6;
+  --on-error-container: #93000A;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-headline {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+}
+
+.font-mono-data {
+  font-family: 'Inter', monospace;
+  font-feature-settings: "tnum";
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  font-size: 20px;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.material-symbols-outlined.fill {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+}
+
+/* Ambient subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f0f3ff;
+}
+::-webkit-scrollbar-thumb {
+  background: #c1c8c2;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

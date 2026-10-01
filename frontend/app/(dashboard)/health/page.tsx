@@ -1,32 +1,31 @@
-import React from "react";
-import { PageHeader } from "@/components/common/page-header";
-import { EmptyState } from "@/components/common/empty-state";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+"use client";
+
+import React, { useState } from "react";
+import {
+  HealthKpiSummary,
+  AntibioticWithdrawalTracker,
+  QuarantineBayManager,
+  TreatmentLogTable,
+} from "@/features/health";
 
 export default function HealthPage() {
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Veterinary Health Records"
-        description="Medical examinations, diagnoses, clinical treatments, and prescription logs."
-      >
-        <Button size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Record Health Check
-        </Button>
-      </PageHeader>
+  const handleNewCheck = () => {
+    alert("Record New Health Check: Opens clinical examination modal with CMT paddle scores and drug catalog.");
+  };
 
-      <EmptyState
-        title="No health records found"
-        description="Records for veterinary health records will appear here as entries are logged."
-        action={
-          <Button size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Record Health Check
-          </Button>
-        }
-      />
+  return (
+    <div className="flex flex-col min-h-screen bg-[#F8F9F6] p-6 space-y-5">
+      {/* Top Health & Vet KPIs */}
+      <HealthKpiSummary />
+
+      {/* Antibiotic Withdrawal Countdown Tracker */}
+      <AntibioticWithdrawalTracker />
+
+      {/* Quarantine Bay Manager */}
+      <QuarantineBayManager />
+
+      {/* Treatment Records & Diagnostics Table */}
+      <TreatmentLogTable onNewCheck={handleNewCheck} />
     </div>
   );
 }

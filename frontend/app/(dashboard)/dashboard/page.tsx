@@ -1,103 +1,89 @@
+"use client";
+
 import React from "react";
-import { PageHeader } from "@/components/common/page-header";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Beef, Milk, CalendarCheck, Truck, AlertTriangle, ArrowUpRight } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { LiveAlertTicker } from "@/features/dashboard/components/live-alert-ticker";
+import { OperationsHeaderControls } from "@/features/dashboard/components/operations-header-controls";
+import { OperationsKpis } from "@/features/dashboard/components/operations-kpis";
+import { ProductionTrendChart } from "@/features/dashboard/components/production-trend-chart";
+import { RotaryParlorTelemetry } from "@/features/dashboard/components/rotary-parlor-telemetry";
+import { UrgentHealthWatchlist } from "@/features/dashboard/components/urgent-health-watchlist";
+import { ScheduledVetRounds } from "@/features/dashboard/components/scheduled-vet-rounds";
 
 export default function DashboardPage() {
+  const router = useRouter();
+
+  const handleLogMilkingBatch = () => {
+    router.push("/milk");
+  };
+
+  const handleReportHealthIssue = () => {
+    router.push("/health");
+  };
+
+  const handleExportLog = () => {
+    // Generate CSV or notify user
+    const csvContent = "data:text/csv;charset=utf-8,Date,Shift,Yield_Liters,SCC,AvgYield\n2024-10-24,AM,7420,112000,36.0\n";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "daily_operations_log_2024-10-24.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleIsolateCow = (cowTag: string) => {
+    router.push(`/health?action=isolate&cow=${encodeURIComponent(cowTag)}`);
+  };
+
+  const handleReviewCmt = (cowTag: string) => {
+    router.push(`/health?action=cmt&cow=${encodeURIComponent(cowTag)}`);
+  };
+
+  const handleConfirmPen = (cowTag: string) => {
+    router.push(`/cows?action=maternity&cow=${encodeURIComponent(cowTag)}`);
+  };
+
+  const handleOpenProtocol = () => {
+    router.push("/health");
+  };
+
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Farm Operations Dashboard"
-        description="Real-time herd vitals, daily milk yields, and logistics orchestration."
-      >
-        <Link href="/milk">
-          <Button variant="outline" size="sm">Record Milk</Button>
-        </Link>
-        <Link href="/cows">
-          <Button size="sm">Register Cow</Button>
-        </Link>
-      </PageHeader>
+    <div className="flex flex-col min-h-full">
+      {/* Live System Ticker Bar */}
+      <LiveAlertTicker />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Total Herd</CardTitle>
-            <Beef className="w-4 h-4 text-[#1E3A2F]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#1F2421]">142</div>
-            <p className="text-xs text-gray-500 mt-1">98 Active Lactating</p>
-          </CardContent>
-        </Card>
+      {/* Main Operations Canvas */}
+      <div className="p-6 space-y-5 bg-[#F8F9F6]">
+        {/* SECTION A: Executive Header & Context Controls */}
+        <OperationsHeaderControls
+          onLogMilkingBatch={handleLogMilkingBatch}
+          onReportHealthIssue={handleReportHealthIssue}
+          onExportLog={handleExportLog}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Today's Milk Yield</CardTitle>
-            <Milk className="w-4 h-4 text-[#1E3A2F]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#1F2421]">1,840 L</div>
-            <p className="text-xs text-emerald-600 mt-1 flex items-center">
-              <ArrowUpRight className="w-3 h-3 mr-0.5" /> +4.2% from yesterday
-            </p>
-          </CardContent>
-        </Card>
+        {/* SECTION B: 4 High-Density Metric KPI Cards */}
+        <OperationsKpis />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Active Subscriptions</CardTitle>
-            <CalendarCheck className="w-4 h-4 text-[#4D6A42]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#1F2421]">384</div>
-            <p className="text-xs text-gray-500 mt-1">Daily recurring morning delivery</p>
-          </CardContent>
-        </Card>
+        {/* SECTION C: Main Workspace Two-Column Layout */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {/* LEFT COLUMN: Production Trends & Rotary Telemetry (7 Cols) */}
+          <div className="lg:col-span-7 space-y-5">
+            <ProductionTrendChart />
+            <RotaryParlorTelemetry />
+          </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Pending Deliveries</CardTitle>
-            <Truck className="w-4 h-4 text-[#4D6A42]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#1F2421]">24</div>
-            <p className="text-xs text-gray-500 mt-1">3 routes actively in progress</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Recent Milk Collection</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 flex items-center justify-center border border-dashed border-[#E2E5DF] rounded-md text-gray-400 text-sm">
-              Milk production analytics chart placeholder (Ready for Recharts integration in Phase 5)
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center text-sm font-semibold">
-              <AlertTriangle className="w-4 h-4 text-amber-500 mr-2" />
-              Action Required
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-xs">
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
-              <p className="font-semibold text-amber-800">5 Vaccinations Due</p>
-              <p className="text-amber-700 mt-0.5">Foot-and-Mouth scheduled for Pen B cows.</p>
-            </div>
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <p className="font-semibold text-blue-800">Silage Stock Alert</p>
-              <p className="text-blue-700 mt-0.5">Corn silage reserve below 15% threshold.</p>
-            </div>
-          </CardContent>
-        </Card>
+          {/* RIGHT COLUMN: Urgent Health & Scheduled Vet Rounds (5 Cols) */}
+          <div className="lg:col-span-5 space-y-5">
+            <UrgentHealthWatchlist
+              onIsolateCow={handleIsolateCow}
+              onReviewCmt={handleReviewCmt}
+              onConfirmPen={handleConfirmPen}
+            />
+            <ScheduledVetRounds onOpenProtocol={handleOpenProtocol} />
+          </div>
+        </section>
       </div>
     </div>
   );

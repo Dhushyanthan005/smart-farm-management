@@ -3,90 +3,157 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MAIN_NAV_ITEMS } from "@/lib/constants/navigation";
 import { cn } from "@/lib/utils/cn";
 import {
   LayoutDashboard,
   Beef,
-  Milk,
+  Droplets,
   HeartPulse,
-  Syringe,
-  GitFork,
   Wheat,
+  Receipt,
+  Settings,
+  HelpCircle,
+  PlusCircle,
   Boxes,
   Users,
   CalendarCheck,
   ShoppingBag,
   Truck,
-  Coins,
-  UserCheck,
   BarChart3,
   Bell,
-  Settings,
+  Syringe,
+  GitFork,
+  UserCheck,
 } from "lucide-react";
 
-const ICON_MAP: Record<string, React.ElementType> = {
-  LayoutDashboard,
-  Beef,
-  Milk,
-  HeartPulse,
-  Syringe,
-  GitFork,
-  Wheat,
-  Boxes,
-  Users,
-  CalendarCheck,
-  ShoppingBag,
-  Truck,
-  Coins,
-  UserCheck,
-  BarChart3,
-  Bell,
-  Settings,
-};
+interface NavItem {
+  title: string;
+  href: string;
+  icon: React.ElementType;
+  badge?: string;
+  badgeVariant?: "danger" | "default";
+}
+
+const PRIMARY_NAV: NavItem[] = [
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Herd Management", href: "/cows", icon: Beef },
+  { title: "Milk Production", href: "/milk", icon: Droplets },
+  { title: "Health & Vet", href: "/health", icon: HeartPulse, badge: "2", badgeVariant: "danger" },
+  { title: "Vaccinations", href: "/vaccinations", icon: Syringe },
+  { title: "Breeding & AI", href: "/breeding", icon: GitFork },
+  { title: "Feed & Ration", href: "/feed", icon: Wheat },
+  { title: "Inventory", href: "/inventory", icon: Boxes },
+  { title: "Financial Ledger", href: "/finance", icon: Receipt },
+  { title: "Customers", href: "/customers", icon: Users },
+  { title: "Subscriptions", href: "/subscriptions", icon: CalendarCheck },
+  { title: "Orders & Sales", href: "/orders", icon: ShoppingBag },
+  { title: "Deliveries", href: "/deliveries", icon: Truck },
+  { title: "Staff & Shifts", href: "/staff", icon: UserCheck },
+  { title: "Reports & Logs", href: "/reports", icon: BarChart3 },
+  { title: "Notifications", href: "/notifications", icon: Bell },
+];
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 border-r border-[#E2E5DF] bg-white flex flex-col h-screen fixed left-0 top-0 z-30">
-      <div className="h-16 flex items-center px-6 border-b border-[#E2E5DF]">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-[#1E3A2F] flex items-center justify-center text-white font-bold">
-            DF
+    <aside className="w-60 h-screen flex flex-col justify-between p-3 border-r border-[#E2E5DF] bg-[#F4F6F2] flex-shrink-0 select-none fixed left-0 top-0 z-30">
+      <div className="flex flex-col gap-3">
+        {/* Top Branding Section */}
+        <div className="flex items-center gap-3 px-2 py-1.5">
+          <div className="w-9 h-9 rounded-lg bg-[#1E3A2F] text-[#92f7c3] flex items-center justify-center font-bold text-base shadow-sm ring-1 ring-[#1E3A2F]/20">
+            <Droplets className="w-5 h-5 fill-[#92f7c3]" />
           </div>
-          <div>
-            <span className="font-bold text-[#1F2421] text-base tracking-tight">DairyFlow</span>
-            <span className="block text-[10px] text-gray-500 font-medium -mt-1">Smart Dairy OS</span>
+          <div className="flex flex-col min-w-0">
+            <span className="font-bold text-sm text-[#1E3A2F] truncate tracking-tight font-headline">
+              DairyFlow ERP
+            </span>
+            <span className="text-[11px] text-gray-500 truncate">
+              Precision Herd &amp; Lactation
+            </span>
           </div>
         </div>
+
+        {/* Quick Bulk Entry CTA */}
+        <Link href="/milk">
+          <button
+            type="button"
+            className="w-full bg-white border border-[#E2E5DF] hover:border-[#1E3A2F] text-[#1E3A2F] hover:bg-[#EAECE7] text-xs font-semibold rounded-lg py-1.5 px-3 flex items-center justify-center gap-2 shadow-sm transition-all duration-150 active:scale-[0.98]"
+          >
+            <PlusCircle className="w-4 h-4 text-[#4D6A42]" />
+            <span>Quick Bulk Entry</span>
+          </button>
+        </Link>
+
+        {/* Main Navigation Tabs */}
+        <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-270px)] pr-1">
+          {PRIMARY_NAV.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(`${item.href}/`));
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg transition-colors",
+                  isActive
+                    ? "bg-[#1E3A2F] text-white shadow-sm font-semibold"
+                    : "text-gray-700 hover:bg-[#EAECE7] hover:text-[#1E3A2F]"
+                )}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Icon className={cn("w-4 h-4 flex-shrink-0", isActive ? "text-[#92f7c3]" : "text-gray-500")} />
+                  <span className="truncate">{item.title}</span>
+                </div>
+                {item.badge && (
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.5 text-[10px] font-bold rounded",
+                      item.badgeVariant === "danger"
+                        ? "bg-[#FFDAD6] text-[#93000A]"
+                        : "bg-gray-200 text-gray-800"
+                    )}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-        {MAIN_NAV_ITEMS.map((item) => {
-          const Icon = ICON_MAP[item.icon] || LayoutDashboard;
-          const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+      {/* Bottom Telemetry Status & Utility Links */}
+      <div className="pt-2 border-t border-[#E2E5DF] space-y-1">
+        <div className="px-3 py-2 bg-white rounded-lg border border-[#E2E5DF] text-[11px] space-y-1 mb-1 shadow-sm">
+          <div className="flex items-center justify-between text-gray-600">
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 inline-block animate-pulse" />
+              IoT Telemetry
+            </span>
+            <span className="text-emerald-700 font-semibold">Online (99.8%)</span>
+          </div>
+          <div className="flex items-center justify-between text-gray-600">
+            <span>Parlor Flow</span>
+            <span className="font-bold text-[#1F2421]">54.2 L/min</span>
+          </div>
+        </div>
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                isActive
-                  ? "bg-[#1E3A2F] text-white"
-                  : "text-[#1F2421] hover:bg-[#F4F5F0] hover:text-[#1E3A2F]"
-              )}
-            >
-              <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
-              <span className="truncate">{item.title}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="p-4 border-t border-[#E2E5DF] text-xs text-gray-400 text-center">
-        DairyFlow v1.0.0
+        <Link
+          href="/settings"
+          className="text-gray-600 hover:bg-[#EAECE7] hover:text-[#1F2421] rounded-lg px-3 py-1.5 flex items-center gap-2.5 text-xs font-medium transition-colors"
+        >
+          <Settings className="w-4 h-4 text-gray-500" />
+          <span>Facility Settings</span>
+        </Link>
+        <a
+          href="#support"
+          className="text-gray-600 hover:bg-[#EAECE7] hover:text-[#1F2421] rounded-lg px-3 py-1.5 flex items-center gap-2.5 text-xs font-medium transition-colors"
+        >
+          <HelpCircle className="w-4 h-4 text-gray-500" />
+          <span>Support Desk</span>
+        </a>
       </div>
     </aside>
   );
