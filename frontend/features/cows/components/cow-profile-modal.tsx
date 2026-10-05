@@ -25,6 +25,9 @@ import {
   Loader2,
   Pill,
   ShieldAlert,
+  Heart,
+  Flame,
+  Sparkles,
 } from "lucide-react";
 import { StitchCow } from "../types/stitch-cow";
 import { useCow } from "../hooks/use-cows";
@@ -35,6 +38,10 @@ import {
   useCowQuarantineHistory,
   useCowWithdrawalStatus,
 } from "@/features/health/hooks/use-health";
+import {
+  useCowBreedingHistory,
+  useCowCalvingHistory,
+} from "@/features/breeding/hooks/use-breeding";
 
 interface CowProfileModalProps {
   cow: StitchCow | null;
@@ -88,6 +95,19 @@ export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProf
   const cowQuarantines = quarantineHistoryResponse?.data?.content || [];
   const withdrawalStatus = cowWithdrawalResponse?.data;
   const activeTreatmentsList = cowTreatments.filter((t) => t.status === "ACTIVE");
+
+  // Breeding & Reproductive hooks
+  const { data: cowBreedingResponse, isLoading: breedingLoading } = useCowBreedingHistory(
+    activeTab === "Breeding" ? cowIdToFetch : undefined
+  );
+  const { data: cowCalvingResponse } = useCowCalvingHistory(
+    activeTab === "Breeding" ? cowIdToFetch : undefined,
+    0,
+    20
+  );
+
+  const breedingSummary = cowBreedingResponse?.data;
+  const cowCalvings = cowCalvingResponse?.data?.content || [];
 
   if (!isOpen || !cow) return null;
 
@@ -287,7 +307,7 @@ export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProf
 
           {/* Bento Grid Detailed View */}
           <div className="grid grid-cols-12 gap-4 pb-2">
-            {activeTab !== "Overview" && activeTab !== "Milk" && activeTab !== "Health" && (
+            {activeTab !== "Overview" && activeTab !== "Milk" && activeTab !== "Health" && activeTab !== "Breeding" && (
               <div className="col-span-12 p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
@@ -763,6 +783,219 @@ export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProf
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Breeding & Genetics Tab (Phase 7 Live Integration) */}
+            {activeTab === "Breeding" && (
+              <div className="col-span-12 space-y-4">
+                {/* 4 Summary Stat Pills */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="p-4 bg-white border border-[#E2E5DF] rounded-xl shadow-xs">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#717973]">
+                      Reproductive Status
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-xl font-bold text-[#1E3A2F] font-headline">
+                        {breedingSummary?.reproductiveStatus ? breedingSummary.reproductiveStatus.replace("_", " ") : "OPEN"}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#717973] font-medium mt-1 block">
+                      Parity {breedingSummary?.parity ?? liveCow?.parity ?? 0} • Lifetime Calvings
+                    </span>
+                  </div>
+
+                  <div className="p-4 bg-white border border-[#E2E5DF] rounded-xl shadow-xs">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#717973]">
+                      Active Pregnancy
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className={`text-xl font-bold font-headline ${breedingSummary?.activePregnancy?.pregnancyStatus === "CONFIRMED" ? "text-pink-700" : "text-[#1E3A2F]"}`}>
+                        {breedingSummary?.activePregnancy?.pregnancyStatus ? breedingSummary.activePregnancy.pregnancyStatus : "None (Open)"}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#717973] font-medium mt-1 block">
+                      {breedingSummary?.activePregnancy?.expectedCalvingDate
+                        ? `Due: ${breedingSummary.activePregnancy.expectedCalvingDate} (${breedingSummary.activePregnancy.daysRemaining}d left)`
+                        : "No confirmed pregnancy"}
+                    </span>
+                  </div>
+
+                  <div className="p-4 bg-white border border-[#E2E5DF] rounded-xl shadow-xs">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#717973]">
+                      Latest Service / AI
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-xl font-bold text-[#1E3A2F] font-headline">
+                        {breedingSummary?.latestBreeding?.breedingMethod ? (breedingSummary.latestBreeding.breedingMethod === "ARTIFICIAL_INSEMINATION" ? "AI" : "Natural") : "None"}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#717973] font-medium mt-1 block truncate">
+                      {breedingSummary?.latestBreeding
+                        ? `${breedingSummary.latestBreeding.breedingDate} • ${breedingSummary.latestBreeding.semenReference || breedingSummary.latestBreeding.bullTagNumber || "Completed"}`
+                        : "No insemination on record"}
+                    </span>
+                  </div>
+
+                  <div className="p-4 bg-white border border-[#E2E5DF] rounded-xl shadow-xs">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#717973]">
+                      Latest Calving
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-xl font-bold text-[#1E3A2F] font-headline">
+                        {breedingSummary?.latestCalving ? `${breedingSummary.latestCalving.calfCount} Calf` : "None"}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#717973] font-medium mt-1 block">
+                      {breedingSummary?.latestCalving
+                        ? `${breedingSummary.latestCalving.calvingDate} • Type: ${breedingSummary.latestCalving.calvingType}`
+                        : "Heifer / No calvings recorded"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Chronological Reproductive Timeline & Calving Log */}
+                <div className="grid grid-cols-12 gap-4">
+                  {/* Timeline (7 cols) */}
+                  <div className="col-span-12 lg:col-span-7 bg-white border border-[#E2E5DF] rounded-xl p-5 shadow-xs">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-[#1E3A2F] font-headline">
+                          Reproductive History Timeline
+                        </h3>
+                        <p className="text-xs text-[#717973]">
+                          Chronological record: Heat detection, insemination, pregnancy exams, and calving events
+                        </p>
+                      </div>
+                      <span className="text-[11px] font-bold text-[#1E3A2F] bg-[#E8F0EC] px-2.5 py-0.5 rounded-full">
+                        {breedingSummary?.timeline?.length ?? 0} Events
+                      </span>
+                    </div>
+
+                    {breedingLoading ? (
+                      <div className="py-12 flex items-center justify-center gap-2 text-xs text-[#717973]">
+                        <Loader2 className="w-4 h-4 animate-spin text-[#1E3A2F]" />
+                        <span>Loading reproductive timeline...</span>
+                      </div>
+                    ) : (breedingSummary?.timeline?.length ?? 0) === 0 ? (
+                      <div className="py-12 text-center text-xs text-[#717973] bg-[#F8F9F6] rounded-lg border border-[#E2E5DF]">
+                        No reproductive events logged for cow {cow.tagNumber} yet.
+                      </div>
+                    ) : (
+                      <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#E2E5DF]">
+                        {breedingSummary?.timeline.map((evt, idx) => {
+                          const getEventIcon = (type: string) => {
+                            switch (type) {
+                              case "HEAT":
+                                return <Flame className="w-3.5 h-3.5 text-amber-600" />;
+                              case "BREEDING":
+                                return <Dna className="w-3.5 h-3.5 text-purple-600" />;
+                              case "PREGNANCY_CHECK":
+                                return <Heart className="w-3.5 h-3.5 text-pink-600" />;
+                              case "CALVING":
+                                return <Sparkles className="w-3.5 h-3.5 text-emerald-600" />;
+                              default:
+                                return <Calendar className="w-3.5 h-3.5 text-[#1E3A2F]" />;
+                            }
+                          };
+
+                          const formattedDate = evt.eventDate
+                            ? new Date(evt.eventDate).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })
+                            : "--";
+
+                          return (
+                            <div key={evt.id || idx} className="relative group">
+                              <div className="absolute -left-6 top-1 w-5 h-5 rounded-full bg-white border-2 border-[#1E3A2F] flex items-center justify-center shadow-xs">
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#1E3A2F]" />
+                              </div>
+                              <div className="p-3 bg-[#F8F9F6] border border-[#E2E5DF] rounded-lg group-hover:border-[#1E3A2F]/40 transition-colors">
+                                <div className="flex items-center justify-between text-xs">
+                                  <div className="flex items-center gap-1.5 font-bold text-[#1F2421]">
+                                    {getEventIcon(evt.eventType)}
+                                    <span>{evt.title}</span>
+                                  </div>
+                                  <span className="text-[11px] text-[#717973] font-mono">{formattedDate}</span>
+                                </div>
+                                <p className="text-xs text-[#414844] mt-1">{evt.description}</p>
+                                <div className="flex items-center justify-between text-[10px] text-[#717973] mt-2 pt-1.5 border-t border-[#E2E5DF]/60">
+                                  <span>Status: <strong className="text-[#1F2421]">{evt.status}</strong></span>
+                                  {evt.performedBy && <span>Staff: {evt.performedBy}</span>}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Historical Calving & Delivery Table (5 cols) */}
+                  <div className="col-span-12 lg:col-span-5 bg-white border border-[#E2E5DF] rounded-xl p-5 shadow-xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h3 className="text-sm font-bold text-[#1E3A2F] font-headline">
+                            Calving & Offspring History
+                          </h3>
+                          <p className="text-xs text-[#717973]">
+                            Lifetime parturition outcomes
+                          </p>
+                        </div>
+                        <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                          {cowCalvings.length} Recorded
+                        </span>
+                      </div>
+
+                      {cowCalvings.length === 0 ? (
+                        <div className="py-12 text-center text-xs text-[#717973] bg-[#F8F9F6] rounded-lg border border-[#E2E5DF]">
+                          No historical calvings recorded for this cow.
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs">
+                            <thead className="text-[10px] uppercase tracking-wider text-[#717973] border-b border-[#E2E5DF]">
+                              <tr>
+                                <th className="py-2 px-2">Date</th>
+                                <th className="py-2 px-2">Delivery</th>
+                                <th className="py-2 px-2">Calves</th>
+                                <th className="py-2 px-2">Outcome</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#E2E5DF]">
+                              {cowCalvings.map((c) => (
+                                <tr key={c.id} className="hover:bg-[#F8F9F6] transition-colors">
+                                  <td className="py-2 px-2 font-mono text-[#717973]">{c.calvingDate}</td>
+                                  <td className="py-2 px-2 font-semibold text-[#1F2421]">{c.calvingType}</td>
+                                  <td className="py-2 px-2 text-[#414844]">{c.calfCount} Calf</td>
+                                  <td className="py-2 px-2">
+                                    {c.complications ? (
+                                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
+                                        Assisted
+                                      </span>
+                                    ) : (
+                                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                                        Normal
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-[#E2E5DF] text-[11px] text-[#717973] flex items-center justify-between">
+                      <span>Total Parity: {liveCow?.parity ?? cow.parity}</span>
+                      <span className="font-semibold text-[#1E3A2F]">V6 Reproductive Schema Active</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 

@@ -79,6 +79,28 @@ public class UserPrincipal implements UserDetails {
                     } else if ("HEALTH_CREATE".equalsIgnoreCase(p.getName()) || "HEALTH_UPDATE".equalsIgnoreCase(p.getName())) {
                         authorities.add(new SimpleGrantedAuthority("HEALTH_WRITE"));
                     }
+
+                    // Ensure interchangeable aliases for breeding permissions
+                    if ("BREEDING_READ".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("BREEDING_VIEW"));
+                        authorities.add(new SimpleGrantedAuthority("HEAT_VIEW"));
+                        authorities.add(new SimpleGrantedAuthority("PREGNANCY_VIEW"));
+                        authorities.add(new SimpleGrantedAuthority("CALVING_VIEW"));
+                    } else if ("BREEDING_WRITE".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("BREEDING_CREATE"));
+                        authorities.add(new SimpleGrantedAuthority("BREEDING_UPDATE"));
+                        authorities.add(new SimpleGrantedAuthority("HEAT_CREATE"));
+                        authorities.add(new SimpleGrantedAuthority("HEAT_UPDATE"));
+                        authorities.add(new SimpleGrantedAuthority("PREGNANCY_CREATE"));
+                        authorities.add(new SimpleGrantedAuthority("PREGNANCY_UPDATE"));
+                        authorities.add(new SimpleGrantedAuthority("PREGNANCY_CONFIRM"));
+                        authorities.add(new SimpleGrantedAuthority("CALVING_CREATE"));
+                        authorities.add(new SimpleGrantedAuthority("CALVING_UPDATE"));
+                    } else if ("BREEDING_VIEW".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("BREEDING_READ"));
+                    } else if ("BREEDING_CREATE".equalsIgnoreCase(p.getName()) || "BREEDING_UPDATE".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("BREEDING_WRITE"));
+                    }
                 });
             }
         }

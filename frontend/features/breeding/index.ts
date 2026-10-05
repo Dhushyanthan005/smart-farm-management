@@ -1,3 +1,10 @@
-// Feature module: breeding
-export const FEATURE__INITIALIZED = true;
-
+export * from "./hooks/use-breeding";
+export * from "./components/breeding-kpi-summary";
+export * from "./components/heat-detection-table";
+export * from "./components/breeding-records-table";
+export * from "./components/pregnancy-monitoring-table";
+export * from "./components/calving-log-table";
+export * from "./components/record-heat-modal";
+export * from "./components/record-breeding-modal";
+export * from "./components/confirm-pregnancy-modal";
+export * from "./components/record-calving-modal";

@@ -41,6 +41,58 @@ public class CowController {
     private final CowService cowService;
     private final com.dairyflow.modules.milk.service.MilkService milkService;
     private final com.dairyflow.modules.health.service.HealthService healthService;
+    private final com.dairyflow.modules.breeding.service.BreedingService breedingService;
+
+    @GetMapping("/{cowId}/breeding")
+    @PreAuthorize("hasAnyAuthority('COW_VIEW', 'COW_READ', 'BREEDING_VIEW', 'BREEDING_READ', 'ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_VETERINARIAN', 'ROLE_WORKER')")
+    @Operation(summary = "Get reproductive status, latest breeding/pregnancy, and chronological timeline for this cow")
+    public ResponseEntity<ApiResponse<com.dairyflow.modules.breeding.dto.CowReproductiveSummaryResponse>> getCowBreedingSummary(
+            @PathVariable UUID cowId
+    ) {
+        return ResponseEntity.ok(ApiResponse.ok(breedingService.getCowReproductiveSummary(cowId)));
+    }
+
+    @GetMapping("/{cowId}/heat-history")
+    @PreAuthorize("hasAnyAuthority('COW_VIEW', 'COW_READ', 'HEAT_VIEW', 'BREEDING_READ', 'ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_VETERINARIAN', 'ROLE_WORKER')")
+    @Operation(summary = "Get historical heat observations for this cow")
+    public ResponseEntity<ApiResponse<PageResponse<com.dairyflow.modules.breeding.dto.HeatRecordResponse>>> getCowHeatHistory(
+            @PathVariable UUID cowId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        int boundedSize = Math.max(1, Math.min(size, 100));
+        int boundedPage = Math.max(0, page);
+        Pageable pageable = PageRequest.of(boundedPage, boundedSize, Sort.by(Sort.Direction.DESC, "detectedAt"));
+        return ResponseEntity.ok(ApiResponse.ok(PageResponse.from(breedingService.getHeatHistoryByCow(cowId, pageable))));
+    }
+
+    @GetMapping("/{cowId}/pregnancy-history")
+    @PreAuthorize("hasAnyAuthority('COW_VIEW', 'COW_READ', 'PREGNANCY_VIEW', 'BREEDING_READ', 'ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_VETERINARIAN', 'ROLE_WORKER')")
+    @Operation(summary = "Get historical pregnancy examinations for this cow")
+    public ResponseEntity<ApiResponse<PageResponse<com.dairyflow.modules.breeding.dto.PregnancyRecordResponse>>> getCowPregnancyHistory(
+            @PathVariable UUID cowId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        int boundedSize = Math.max(1, Math.min(size, 100));
+        int boundedPage = Math.max(0, page);
+        Pageable pageable = PageRequest.of(boundedPage, boundedSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return ResponseEntity.ok(ApiResponse.ok(PageResponse.from(breedingService.getPregnancyHistoryByCow(cowId, pageable))));
+    }
+
+    @GetMapping("/{cowId}/calving-history")
+    @PreAuthorize("hasAnyAuthority('COW_VIEW', 'COW_READ', 'CALVING_VIEW', 'BREEDING_READ', 'ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_VETERINARIAN', 'ROLE_WORKER')")
+    @Operation(summary = "Get historical calving birth records for this cow")
+    public ResponseEntity<ApiResponse<PageResponse<com.dairyflow.modules.breeding.dto.CalvingRecordResponse>>> getCowCalvingHistory(
+            @PathVariable UUID cowId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        int boundedSize = Math.max(1, Math.min(size, 100));
+        int boundedPage = Math.max(0, page);
+        Pageable pageable = PageRequest.of(boundedPage, boundedSize, Sort.by(Sort.Direction.DESC, "calvingDate"));
+        return ResponseEntity.ok(ApiResponse.ok(PageResponse.from(breedingService.getCalvingHistoryByCow(cowId, pageable))));
+    }
 
     @GetMapping("/{cowId}/milk")
     @PreAuthorize("hasAnyAuthority('COW_VIEW', 'COW_READ', 'MILK_VIEW', 'MILK_READ', 'ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_VETERINARIAN', 'ROLE_WORKER')")
