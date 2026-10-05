@@ -39,6 +39,21 @@ public class CowController {
     );
 
     private final CowService cowService;
+    private final com.dairyflow.modules.milk.service.MilkService milkService;
+
+    @GetMapping("/{cowId}/milk")
+    @PreAuthorize("hasAnyAuthority('COW_VIEW', 'COW_READ', 'MILK_VIEW', 'MILK_READ', 'ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_VETERINARIAN', 'ROLE_WORKER')")
+    @Operation(summary = "Get historical milk production records for this cow")
+    public ResponseEntity<ApiResponse<PageResponse<com.dairyflow.modules.milk.dto.MilkRecordResponse>>> getCowMilkHistory(
+            @PathVariable UUID cowId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        int boundedSize = Math.max(1, Math.min(size, 100));
+        int boundedPage = Math.max(0, page);
+        Pageable pageable = PageRequest.of(boundedPage, boundedSize, Sort.by(Sort.Direction.DESC, "productionDate", "shift"));
+        return ResponseEntity.ok(ApiResponse.ok(milkService.getCowMilkHistory(cowId, pageable)));
+    }
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('COW_CREATE', 'COW_WRITE', 'ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MANAGER')")

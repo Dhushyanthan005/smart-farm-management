@@ -1,20 +1,42 @@
 "use client";
 
-import React, { useState } from "react";
-import { ChevronRight, Calendar, Sun, Moon, UserCheck, Sliders, ChevronDown } from "lucide-react";
+import React, { useRef } from "react";
+import { ChevronRight, Calendar, Sun, Moon, UserCheck, Sliders, PlusCircle } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface MilkShiftHeaderProps {
+  selectedShift?: "Morning" | "Evening";
+  selectedDate?: string;
   onShiftChange?: (shift: "Morning" | "Evening") => void;
+  onDateChange?: (date: string) => void;
   onCalibrate?: () => void;
+  onOpenEntryModal?: () => void;
 }
 
-export function MilkShiftHeader({ onShiftChange, onCalibrate }: MilkShiftHeaderProps) {
-  const [selectedShift, setSelectedShift] = useState<"Morning" | "Evening">("Morning");
+export function MilkShiftHeader({
+  selectedShift = "Morning",
+  selectedDate,
+  onShiftChange,
+  onDateChange,
+  onCalibrate,
+  onOpenEntryModal,
+}: MilkShiftHeaderProps) {
+  const { user } = useAuth();
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSelectShift = (shift: "Morning" | "Evening") => {
-    setSelectedShift(shift);
-    onShiftChange?.(shift);
-  };
+  const displayDate = selectedDate || new Date().toISOString().split("T")[0];
+
+  const primaryRole = user?.roles?.[0]?.replace("ROLE_", "");
+  const operatorName = user
+    ? `${user.firstName || user.username} ${user.lastName || ""}`.trim() +
+      (primaryRole ? ` (${primaryRole})` : "")
+    : "Lead Herdsman";
+
+  const formattedDate = new Date(displayDate + "T00:00:00").toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 
   return (
     <section className="bg-white rounded-xl border border-[#E2E5DF] shadow-sm p-4">
@@ -29,17 +51,26 @@ export function MilkShiftHeader({ onShiftChange, onCalibrate }: MilkShiftHeaderP
           </div>
 
           {/* Date Selector Pill */}
-          <div className="flex items-center bg-[#F8F9F6] border border-[#E2E5DF] rounded px-3 py-1.5 gap-2 text-[#1F2421]">
+          <div
+            onClick={() => dateInputRef.current?.showPicker?.()}
+            className="relative flex items-center bg-[#F8F9F6] hover:bg-[#EAECE7] border border-[#E2E5DF] rounded px-3 py-1.5 gap-2 text-[#1F2421] cursor-pointer transition-colors"
+          >
             <Calendar className="w-4 h-4 text-[#006c48]" />
-            <span className="text-xs font-semibold">Today - Oct 24, 2024</span>
-            <ChevronDown className="w-3.5 h-3.5 text-[#717973] cursor-pointer" />
+            <span className="text-xs font-semibold">{formattedDate}</span>
+            <input
+              ref={dateInputRef}
+              type="date"
+              value={displayDate}
+              onChange={(e) => onDateChange?.(e.target.value)}
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+            />
           </div>
 
           {/* Shift Selection Segmented Switch */}
           <div className="inline-flex rounded-lg border border-[#E2E5DF] bg-[#F8F9F6] p-0.5">
             <button
               type="button"
-              onClick={() => handleSelectShift("Morning")}
+              onClick={() => onShiftChange?.("Morning")}
               className={`px-3 py-1 rounded text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all ${
                 selectedShift === "Morning"
                   ? "bg-[#1E3A2F] text-white"
@@ -52,7 +83,7 @@ export function MilkShiftHeader({ onShiftChange, onCalibrate }: MilkShiftHeaderP
 
             <button
               type="button"
-              onClick={() => handleSelectShift("Evening")}
+              onClick={() => onShiftChange?.("Evening")}
               className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors ${
                 selectedShift === "Evening"
                   ? "bg-[#1E3A2F] text-white"
@@ -74,10 +105,21 @@ export function MilkShiftHeader({ onShiftChange, onCalibrate }: MilkShiftHeaderP
                 Parlor Operator
               </div>
               <div className="text-xs font-bold text-[#1E3A2F]">
-                Marcus Vance - Lead Herdsman
+                {operatorName}
               </div>
             </div>
           </div>
+
+          {onOpenEntryModal && (
+            <button
+              type="button"
+              onClick={onOpenEntryModal}
+              className="h-9 px-3 bg-[#1E3A2F] text-white rounded text-xs font-semibold flex items-center gap-1.5 shadow-sm hover:bg-[#1b4332] transition-colors"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>Manual Entry</span>
+            </button>
+          )}
 
           <button
             type="button"

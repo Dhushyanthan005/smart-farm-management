@@ -47,6 +47,18 @@ public class UserPrincipal implements UserDetails {
                     } else if ("COW_CREATE".equalsIgnoreCase(p.getName()) || "COW_UPDATE".equalsIgnoreCase(p.getName())) {
                         authorities.add(new SimpleGrantedAuthority("COW_WRITE"));
                     }
+
+                    // Ensure interchangeable aliases for milk permissions
+                    if ("MILK_READ".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("MILK_VIEW"));
+                    } else if ("MILK_WRITE".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("MILK_CREATE"));
+                        authorities.add(new SimpleGrantedAuthority("MILK_UPDATE"));
+                    } else if ("MILK_VIEW".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("MILK_READ"));
+                    } else if ("MILK_CREATE".equalsIgnoreCase(p.getName()) || "MILK_UPDATE".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("MILK_WRITE"));
+                    }
                 });
             }
         }
@@ -111,5 +123,12 @@ public class UserPrincipal implements UserDetails {
     @Override
     public boolean isEnabled() {
         return active;
+    }
+
+    public String getFullName() {
+        String first = firstName != null ? firstName.trim() : "";
+        String last = lastName != null ? lastName.trim() : "";
+        String full = (first + " " + last).trim();
+        return full.isEmpty() ? username : full;
     }
 }

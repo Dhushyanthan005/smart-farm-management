@@ -12,6 +12,7 @@ import {
   UploadCloud,
   Save,
   AlertOctagon,
+  Loader2,
 } from "lucide-react";
 import { MilkSessionEntry, MilkStatus } from "../types/milk-log";
 
@@ -19,16 +20,22 @@ interface MilkBatchTableProps {
   initialEntries: MilkSessionEntry[];
   onCommit?: (entries: MilkSessionEntry[]) => void;
   onImportTelemetry?: () => void;
+  isSubmitting?: boolean;
 }
 
 export function MilkBatchTable({
   initialEntries,
   onCommit,
   onImportTelemetry,
+  isSubmitting,
 }: MilkBatchTableProps) {
   const [entries, setEntries] = useState<MilkSessionEntry[]>(initialEntries);
   const [filterMode, setFilterMode] = useState<"all" | "withholding" | "conductivity">("all");
   const [scannerInput, setScannerInput] = useState("");
+
+  React.useEffect(() => {
+    setEntries(initialEntries);
+  }, [initialEntries]);
 
   const handleYieldChange = (index: number, val: string) => {
     const num = parseFloat(val);
@@ -343,11 +350,16 @@ export function MilkBatchTable({
           </button>
           <button
             type="button"
+            disabled={isSubmitting}
             onClick={() => onCommit?.(entries)}
-            className="px-4 py-1.5 rounded bg-[#1E3A2F] text-white hover:bg-[#1b4332] text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+            className="px-4 py-1.5 rounded bg-[#1E3A2F] text-white hover:bg-[#1b4332] text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-50"
           >
-            <Save className="w-4 h-4" />
-            <span>Commit Shift Entries</span>
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            <span>{isSubmitting ? "Committing..." : "Commit Shift Entries"}</span>
           </button>
         </div>
       </div>

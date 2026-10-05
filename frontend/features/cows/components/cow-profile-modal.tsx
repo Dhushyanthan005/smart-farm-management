@@ -18,9 +18,15 @@ import {
   Sun,
   Moon,
   FlaskConical,
+  Clock,
+  AlertTriangle,
+  Package,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { StitchCow } from "../types/stitch-cow";
 import { useCow } from "../hooks/use-cows";
+import { useCowMilkHistory } from "@/features/milk/hooks/use-milk";
 
 interface CowProfileModalProps {
   cow: StitchCow | null;
@@ -35,6 +41,19 @@ export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProf
   // Fetch live cow details from backend API
   const { data: liveCowResponse } = useCow(isOpen && cow ? cow.id : undefined);
   const liveCow = liveCowResponse?.data || cow?.rawCow;
+
+  const cowIdToFetch = isOpen && (liveCow?.id || cow?.id) ? (liveCow?.id || cow?.id) : undefined;
+  const { data: milkHistoryResponse, isLoading: milkHistoryLoading } = useCowMilkHistory(
+    activeTab === "Milk" ? cowIdToFetch : undefined,
+    0,
+    20
+  );
+  const cowMilkRecords = milkHistoryResponse?.data?.content || [];
+  const cowTotalYield = cowMilkRecords.reduce((acc, r) => acc + (r.quantityLiters || 0), 0);
+  const latestAmRecord = cowMilkRecords.find((r) => r.shift === "MORNING");
+  const latestPmRecord = cowMilkRecords.find((r) => r.shift === "EVENING");
+  const avgSessionYield =
+    cowMilkRecords.length > 0 ? (cowTotalYield / cowMilkRecords.length).toFixed(1) : "0.0";
 
   if (!isOpen || !cow) return null;
 
@@ -234,12 +253,12 @@ export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProf
 
           {/* Bento Grid Detailed View */}
           <div className="grid grid-cols-12 gap-4 pb-2">
-            {activeTab !== "Overview" && (
+            {activeTab !== "Overview" && activeTab !== "Milk" && (
               <div className="col-span-12 p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
                   <span>
-                    <strong>{activeTab} Module Boundary:</strong> Live session logs and automated sensors for animal <strong>{cow.tagNumber}</strong> will connect in Phase 5 ({activeTab} module integration).
+                    <strong>{activeTab} Module Boundary:</strong> Specialized veterinary telemetry and records for animal <strong>{cow.tagNumber}</strong> will connect in the upcoming {activeTab} phase.
                   </span>
                 </div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded">
@@ -247,6 +266,183 @@ export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProf
                 </span>
               </div>
             )}
+
+            {/* Milk Production Tab (Phase 5 Live Integration) */}
+            {activeTab === "Milk" && (
+              <div className="col-span-12 space-y-4">
+                {/* 4 Summary Stat Pills */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="p-4 bg-white border border-[#E2E5DF] rounded-xl shadow-xs">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#717973]">
+                      Total Logged Yield
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-2xl font-bold text-[#1E3A2F] font-headline">
+                        {cowTotalYield.toFixed(1)}
+                      </span>
+                      <span className="text-xs text-[#717973]">Liters</span>
+                    </div>
+                    <span className="text-[11px] text-[#15803D] font-medium mt-1 block">
+                      Across {cowMilkRecords.length} recorded milking sessions
+                    </span>
+                  </div>
+
+                  <div className="p-4 bg-white border border-[#E2E5DF] rounded-xl shadow-xs">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#717973]">
+                      Latest AM Harvest
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-2xl font-bold text-[#1E3A2F] font-headline">
+                        {latestAmRecord ? `${latestAmRecord.quantityLiters.toFixed(1)} L` : "--"}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#717973] font-medium mt-1 block">
+                      {latestAmRecord ? `Date: ${latestAmRecord.productionDate}` : "No morning record"}
+                    </span>
+                  </div>
+
+                  <div className="p-4 bg-white border border-[#E2E5DF] rounded-xl shadow-xs">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#717973]">
+                      Latest PM Harvest
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-2xl font-bold text-[#1E3A2F] font-headline">
+                        {latestPmRecord ? `${latestPmRecord.quantityLiters.toFixed(1)} L` : "--"}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#717973] font-medium mt-1 block">
+                      {latestPmRecord ? `Date: ${latestPmRecord.productionDate}` : "No evening record"}
+                    </span>
+                  </div>
+
+                  <div className="p-4 bg-white border border-[#E2E5DF] rounded-xl shadow-xs">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#717973]">
+                      Average Yield / Session
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-2xl font-bold text-[#1E3A2F] font-headline">
+                        {avgSessionYield}
+                      </span>
+                      <span className="text-xs text-[#717973]">L/milking</span>
+                    </div>
+                    <span className="text-[11px] text-[#15803D] font-medium mt-1 flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3" /> Standard parlor output
+                    </span>
+                  </div>
+                </div>
+
+                {/* Milk History Table */}
+                <div className="bg-white border border-[#E2E5DF] rounded-xl shadow-sm overflow-hidden">
+                  <div className="p-4 border-b border-[#E2E5DF] flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Droplets className="w-4 h-4 text-[#006c48]" />
+                      <h3 className="text-xs font-bold text-[#1E3A2F] uppercase tracking-wider">
+                        Production History for Cow #{cow.tagNumber}
+                      </h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-[#717973]">
+                      GET /api/v1/cows/{cow.tagNumber}/milk
+                    </span>
+                  </div>
+
+                  {milkHistoryLoading ? (
+                    <div className="p-8 text-center text-xs text-[#717973] flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-[#1E3A2F]" />
+                      <span>Loading milk production records from database...</span>
+                    </div>
+                  ) : cowMilkRecords.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <Droplets className="w-8 h-8 text-[#717973]/40 mx-auto mb-2" />
+                      <p className="text-xs font-bold text-[#1E3A2F]">No Milking Records Found</p>
+                      <p className="text-xs text-[#717973] max-w-sm mx-auto mt-1">
+                        No production records have been recorded for animal {cow.tagNumber} yet. Sessions recorded
+                        from the parlor rotary or manual milk entry will appear here.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead className="bg-[#F8F9F6] border-b border-[#E2E5DF]">
+                          <tr className="text-[11px] font-semibold text-[#717973] uppercase tracking-wider h-8">
+                            <th className="py-2 px-3">Date</th>
+                            <th className="py-2 px-3">Shift</th>
+                            <th className="py-2 px-3">Yield (L)</th>
+                            <th className="py-2 px-3">Disposition / Status</th>
+                            <th className="py-2 px-3 text-center">Cond. (mS/cm)</th>
+                            <th className="py-2 px-3 text-center">SCC</th>
+                            <th className="py-2 px-3">Notes</th>
+                            <th className="py-2 px-3">Operator</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#E2E5DF]">
+                          {cowMilkRecords.map((rec) => {
+                            const isWaste = rec.status === "WASTE" || rec.status === "DISCARDED";
+                            const isColostrum = rec.status === "COLOSTRUM";
+
+                            return (
+                              <tr key={rec.id} className="hover:bg-[#F8F9F6] transition-colors">
+                                <td className="py-2.5 px-3 font-medium text-[#1E3A2F]">
+                                  {rec.productionDate}
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-[#F8F9F6] border border-[#E2E5DF] text-[#1E3A2F]">
+                                    {rec.shift === "MORNING" ? (
+                                      <>
+                                        <Sun className="w-3 h-3 text-amber-500" /> Morning
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Moon className="w-3 h-3 text-indigo-500" /> Evening
+                                      </>
+                                    )}
+                                  </span>
+                                </td>
+                                <td className="py-2.5 px-3 font-mono font-bold text-[#1E3A2F]">
+                                  {rec.quantityLiters.toFixed(1)} L
+                                </td>
+                                <td className="py-2.5 px-3">
+                                  {isWaste ? (
+                                    <span className="px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200 text-[10px] font-bold">
+                                      WASTE (DUMPED)
+                                    </span>
+                                  ) : isColostrum ? (
+                                    <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold">
+                                      COLOSTRUM
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-bold">
+                                      BULK APPROVED
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-2.5 px-3 font-mono text-center text-[#717973]">
+                                  {rec.conductivity ?? "--"}
+                                </td>
+                                <td className="py-2.5 px-3 font-mono text-center text-[#717973]">
+                                  {rec.somaticCellCount
+                                    ? `${Math.round(rec.somaticCellCount / 1000)}k`
+                                    : "--"}
+                                </td>
+                                <td className="py-2.5 px-3 text-[#717973] truncate max-w-xs">
+                                  {rec.notes || "--"}
+                                </td>
+                                <td className="py-2.5 px-3 text-[11px] text-[#717973]">
+                                  {rec.operatorName || "Parlor Lead"}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Overview Modules */}
+            {activeTab === "Overview" && (
+              <>
 
             {/* Module 1: Lactation Curve Chart (8 Cols) */}
             <div className="col-span-12 lg:col-span-8 bg-white border border-[#E2E5DF] rounded-xl p-5 shadow-sm flex flex-col justify-between">
@@ -580,6 +776,8 @@ export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProf
                 </span>
               </div>
             </div>
+              </>
+            )}
           </div>
         </div>
       </div>

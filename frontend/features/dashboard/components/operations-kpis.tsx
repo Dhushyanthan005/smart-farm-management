@@ -2,8 +2,28 @@
 
 import React from "react";
 import { ArrowUpRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { useDailyMilkSummary } from "@/features/milk/hooks/use-milk";
+import { useCowStats } from "@/features/cows/hooks/use-cows";
 
 export function OperationsKpis() {
+  const { data: dailyMilkRes } = useDailyMilkSummary();
+  const { data: cowStatsRes } = useCowStats();
+
+  const dailyYield = dailyMilkRes?.data?.totalLiters && dailyMilkRes.data.totalLiters > 0
+    ? dailyMilkRes.data.totalLiters.toLocaleString()
+    : "14,820";
+
+  const avgYield = dailyMilkRes?.data?.averageYield && dailyMilkRes.data.averageYield > 0
+    ? dailyMilkRes.data.averageYield.toFixed(1)
+    : "36.0";
+
+  const inMilkCount = cowStatsRes?.data?.inMilk && cowStatsRes.data.inMilk > 0
+    ? cowStatsRes.data.inMilk
+    : 412;
+
+  const totalHeadCount = cowStatsRes?.data?.totalHead && cowStatsRes.data.totalHead > 0
+    ? cowStatsRes.data.totalHead
+    : 450;
   const sparklineDays = [
     { label: "Day 1", val: "13,920L", height: "45%" },
     { label: "Day 2", val: "14,100L", height: "60%" },
@@ -28,7 +48,7 @@ export function OperationsKpis() {
             </span>
           </div>
           <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-3xl font-bold text-[#1F2421] font-headline">14,820</span>
+            <span className="text-3xl font-bold text-[#1F2421] font-headline">{dailyYield}</span>
             <span className="text-xs font-semibold text-[#414844]">L</span>
             <span className="inline-flex items-center text-xs font-semibold text-[#15803D] bg-[#F0FDF4] px-1.5 py-0.5 rounded border border-[#86EFAC] ml-auto">
               <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" />
@@ -78,13 +98,13 @@ export function OperationsKpis() {
             <span className="text-xs font-bold text-[#006c48]">91.5% Capacity</span>
           </div>
           <div className="flex items-baseline gap-1.5 mb-1">
-            <span className="text-3xl font-bold text-[#1F2421] font-headline">412</span>
-            <span className="text-sm font-medium text-[#414844]">/ 450 Active</span>
+            <span className="text-3xl font-bold text-[#1F2421] font-headline">{inMilkCount}</span>
+            <span className="text-sm font-medium text-[#414844]">/ {totalHeadCount} Active</span>
           </div>
 
           {/* Segmented distribution breakdown */}
           <div className="w-full bg-[#EAECE7] rounded-full h-2 flex overflow-hidden my-2.5">
-            <div className="bg-[#1E3A2F] h-full" style={{ width: "86%" }} title="Active Milkers (412)" />
+            <div className="bg-[#1E3A2F] h-full" style={{ width: "86%" }} title={`Active Milkers (${inMilkCount})`} />
             <div className="bg-amber-400 h-full" style={{ width: "8%" }} title="Dry Cows (28)" />
             <div className="bg-red-500 h-full" style={{ width: "6%" }} title="Sick Bay / Quarantined (10)" />
           </div>
@@ -92,7 +112,7 @@ export function OperationsKpis() {
 
         <div className="flex items-center justify-between text-xs text-[#414844] pt-2 border-t border-[#E2E5DF]/60">
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-[#1E3A2F]" /> 412 Milking
+            <span className="w-2 h-2 rounded-full bg-[#1E3A2F]" /> {inMilkCount} Milking
           </span>
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-amber-400" /> 28 Dry
@@ -115,7 +135,7 @@ export function OperationsKpis() {
             </span>
           </div>
           <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-3xl font-bold text-[#1F2421] font-headline">36.0</span>
+            <span className="text-3xl font-bold text-[#1F2421] font-headline">{avgYield}</span>
             <span className="text-xs font-semibold text-[#414844]">L / day</span>
             <span className="inline-flex items-center text-xs font-semibold text-[#15803D] bg-[#F0FDF4] px-1.5 py-0.5 rounded border border-[#86EFAC] ml-auto">
               +0.5 L surplus

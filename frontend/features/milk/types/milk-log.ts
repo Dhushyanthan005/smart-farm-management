@@ -12,6 +12,8 @@ export interface MilkSessionEntry {
   duration: string;
   sccFlag: "optimal" | "normal" | "marginal" | "danger" | "colostrum";
   notes: string;
+  cowId?: string;
+  recordId?: string;
 }
 
 export interface SiloTank {
