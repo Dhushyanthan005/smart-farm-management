@@ -59,6 +59,26 @@ public class UserPrincipal implements UserDetails {
                     } else if ("MILK_CREATE".equalsIgnoreCase(p.getName()) || "MILK_UPDATE".equalsIgnoreCase(p.getName())) {
                         authorities.add(new SimpleGrantedAuthority("MILK_WRITE"));
                     }
+
+                    // Ensure interchangeable aliases for health permissions
+                    if ("HEALTH_READ".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("HEALTH_VIEW"));
+                        authorities.add(new SimpleGrantedAuthority("TREATMENT_VIEW"));
+                        authorities.add(new SimpleGrantedAuthority("QUARANTINE_VIEW"));
+                        authorities.add(new SimpleGrantedAuthority("WITHDRAWAL_VIEW"));
+                    } else if ("HEALTH_WRITE".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("HEALTH_CREATE"));
+                        authorities.add(new SimpleGrantedAuthority("HEALTH_UPDATE"));
+                        authorities.add(new SimpleGrantedAuthority("TREATMENT_CREATE"));
+                        authorities.add(new SimpleGrantedAuthority("TREATMENT_UPDATE"));
+                        authorities.add(new SimpleGrantedAuthority("TREATMENT_COMPLETE"));
+                        authorities.add(new SimpleGrantedAuthority("QUARANTINE_CREATE"));
+                        authorities.add(new SimpleGrantedAuthority("QUARANTINE_RELEASE"));
+                    } else if ("HEALTH_VIEW".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("HEALTH_READ"));
+                    } else if ("HEALTH_CREATE".equalsIgnoreCase(p.getName()) || "HEALTH_UPDATE".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("HEALTH_WRITE"));
+                    }
                 });
             }
         }

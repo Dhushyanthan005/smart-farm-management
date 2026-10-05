@@ -6,12 +6,11 @@ import {
   AntibioticWithdrawalTracker,
   QuarantineBayManager,
   TreatmentLogTable,
+  RecordHealthModal,
 } from "@/features/health";
 
 export default function HealthPage() {
-  const handleNewCheck = () => {
-    alert("Record New Health Check: Opens clinical examination modal with CMT paddle scores and drug catalog.");
-  };
+  const [recordModalOpen, setRecordModalOpen] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F8F9F6] p-6 space-y-5">
@@ -25,7 +24,13 @@ export default function HealthPage() {
       <QuarantineBayManager />
 
       {/* Treatment Records & Diagnostics Table */}
-      <TreatmentLogTable onNewCheck={handleNewCheck} />
+      <TreatmentLogTable onNewCheck={() => setRecordModalOpen(true)} />
+
+      {/* Record Health Check / Treatment Modal */}
+      <RecordHealthModal
+        isOpen={recordModalOpen}
+        onClose={() => setRecordModalOpen(false)}
+      />
     </div>
   );
 }

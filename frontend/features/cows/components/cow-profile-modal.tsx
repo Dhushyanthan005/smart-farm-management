@@ -23,10 +23,18 @@ import {
   Package,
   Trash2,
   Loader2,
+  Pill,
+  ShieldAlert,
 } from "lucide-react";
 import { StitchCow } from "../types/stitch-cow";
 import { useCow } from "../hooks/use-cows";
 import { useCowMilkHistory } from "@/features/milk/hooks/use-milk";
+import {
+  useCowHealthHistory,
+  useCowTreatmentHistory,
+  useCowQuarantineHistory,
+  useCowWithdrawalStatus,
+} from "@/features/health/hooks/use-health";
 
 interface CowProfileModalProps {
   cow: StitchCow | null;
@@ -54,6 +62,32 @@ export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProf
   const latestPmRecord = cowMilkRecords.find((r) => r.shift === "EVENING");
   const avgSessionYield =
     cowMilkRecords.length > 0 ? (cowTotalYield / cowMilkRecords.length).toFixed(1) : "0.0";
+
+  // Health & Vet data hooks
+  const { data: healthHistoryResponse, isLoading: healthHistoryLoading } = useCowHealthHistory(
+    activeTab === "Health" ? cowIdToFetch : undefined,
+    0,
+    20
+  );
+  const { data: treatmentHistoryResponse, isLoading: treatmentHistoryLoading } = useCowTreatmentHistory(
+    activeTab === "Health" ? cowIdToFetch : undefined,
+    0,
+    20
+  );
+  const { data: quarantineHistoryResponse, isLoading: quarantineHistoryLoading } = useCowQuarantineHistory(
+    activeTab === "Health" ? cowIdToFetch : undefined,
+    0,
+    20
+  );
+  const { data: cowWithdrawalResponse } = useCowWithdrawalStatus(
+    activeTab === "Health" ? cowIdToFetch : undefined
+  );
+
+  const cowHealthRecords = healthHistoryResponse?.data?.content || [];
+  const cowTreatments = treatmentHistoryResponse?.data?.content || [];
+  const cowQuarantines = quarantineHistoryResponse?.data?.content || [];
+  const withdrawalStatus = cowWithdrawalResponse?.data;
+  const activeTreatmentsList = cowTreatments.filter((t) => t.status === "ACTIVE");
 
   if (!isOpen || !cow) return null;
 
@@ -253,7 +287,7 @@ export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProf
 
           {/* Bento Grid Detailed View */}
           <div className="grid grid-cols-12 gap-4 pb-2">
-            {activeTab !== "Overview" && activeTab !== "Milk" && (
+            {activeTab !== "Overview" && activeTab !== "Milk" && activeTab !== "Health" && (
               <div className="col-span-12 p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
@@ -437,6 +471,298 @@ export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProf
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Health & Vet Tab (Phase 6 Live Integration) */}
+            {activeTab === "Health" && (
+              <div className="col-span-12 space-y-4">
+                {/* 4 Summary Stat Pills */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="p-4 bg-white border border-[#E2E5DF] rounded-xl shadow-xs">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#717973]">
+                      Current Health Status
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-xl font-bold text-[#1E3A2F] font-headline">
+                        {liveCow?.healthStatus || cow.healthStatus}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#717973] font-medium mt-1 block">
+                      Assessed during veterinary rounds
+                    </span>
+                  </div>
+
+                  <div className="p-4 bg-white border border-[#E2E5DF] rounded-xl shadow-xs">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#717973]">
+                      Milk Collection Eligibility
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span
+                        className={`text-xl font-bold font-headline ${
+                          withdrawalStatus?.milkEligible === false
+                            ? "text-red-700"
+                            : "text-emerald-700"
+                        }`}
+                      >
+                        {withdrawalStatus?.milkEligible === false
+                          ? "WITHHELD (Rx)"
+                          : "APPROVED (Saleable)"}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#717973] font-medium mt-1 block">
+                      {withdrawalStatus?.milkEligible === false
+                        ? `${withdrawalStatus.activeWithdrawalsCount} active withdrawal lockout`
+                        : "0 active antibiotic lockouts"}
+                    </span>
+                  </div>
+
+                  <div className="p-4 bg-white border border-[#E2E5DF] rounded-xl shadow-xs">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#717973]">
+                      Physical Location / Bay
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-xl font-bold text-[#1E3A2F] font-headline">
+                        {liveCow?.healthStatus === "QUARANTINED"
+                          ? "Isolation Stanchion"
+                          : liveCow?.pen || cow.currentPen || "Main Barn"}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#717973] font-medium mt-1 block">
+                      {liveCow?.healthStatus === "QUARANTINED"
+                        ? "Bio-isolated milk diversion active"
+                        : "Standard parlor milking line"}
+                    </span>
+                  </div>
+
+                  <div className="p-4 bg-white border border-[#E2E5DF] rounded-xl shadow-xs">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#717973]">
+                      Active Treatments
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-xl font-bold text-[#1E3A2F] font-headline">
+                        {activeTreatmentsList.length} Active
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#717973] font-medium mt-1 block">
+                      {activeTreatmentsList.length > 0
+                        ? activeTreatmentsList[0].medication
+                        : "No active veterinary prescriptions"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Treatment & Prescription History */}
+                <div className="bg-white border border-[#E2E5DF] rounded-xl shadow-sm overflow-hidden">
+                  <div className="p-4 border-b border-[#E2E5DF] flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Pill className="w-4 h-4 text-[#006c48]" />
+                      <h3 className="text-xs font-bold text-[#1E3A2F] uppercase tracking-wider">
+                        Treatment &amp; Prescription Records ({cowTreatments.length})
+                      </h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-[#717973]">
+                      GET /api/v1/cows/{cow.tagNumber}/treatments
+                    </span>
+                  </div>
+
+                  {treatmentHistoryLoading ? (
+                    <div className="p-6 text-center text-xs text-[#717973] flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-[#1E3A2F]" />
+                      <span>Loading treatment records...</span>
+                    </div>
+                  ) : cowTreatments.length === 0 ? (
+                    <div className="p-6 text-center">
+                      <p className="text-xs text-[#717973]">
+                        No medical treatments on record for animal {cow.tagNumber}.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-[#F8F9F6] border-b border-[#E2E5DF] text-[#717973] uppercase font-semibold text-[11px] h-9">
+                            <th className="py-2 px-3">Date</th>
+                            <th className="py-2 px-3">Diagnosis</th>
+                            <th className="py-2 px-3">Medication</th>
+                            <th className="py-2 px-3">Dosage / Route</th>
+                            <th className="py-2 px-3">Withdrawal</th>
+                            <th className="py-2 px-3">Attending Vet</th>
+                            <th className="py-2 px-3 text-right">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#E2E5DF]">
+                          {cowTreatments.map((t) => (
+                            <tr key={t.id} className="hover:bg-[#F8F9F6] transition-colors">
+                              <td className="py-2 px-3 font-mono text-[#717973]">{t.treatmentDate}</td>
+                              <td className="py-2 px-3 font-medium text-[#1E3A2F]">{t.diagnosis}</td>
+                              <td className="py-2 px-3 text-[#414844]">{t.medication}</td>
+                              <td className="py-2 px-3 text-[#717973]">
+                                {t.dosage} {t.route ? `• ${t.route}` : ""}
+                              </td>
+                              <td className="py-2 px-3">
+                                {t.withdrawalDays > 0 ? (
+                                  <span
+                                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                      t.withdrawalActive
+                                        ? "bg-amber-100 text-amber-800"
+                                        : "bg-gray-100 text-gray-700"
+                                    }`}
+                                  >
+                                    {t.withdrawalDays}d {t.withdrawalActive ? "(Active)" : "(Cleared)"}
+                                  </span>
+                                ) : (
+                                  <span className="text-[#717973]">0d</span>
+                                )}
+                              </td>
+                              <td className="py-2 px-3 text-[#717973]">
+                                {t.veterinarianName || "Attending Tech"}
+                              </td>
+                              <td className="py-2 px-3 text-right">
+                                <span
+                                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    t.status === "ACTIVE"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-emerald-100 text-emerald-800"
+                                  }`}
+                                >
+                                  {t.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* Clinical Examinations Table */}
+                <div className="bg-white border border-[#E2E5DF] rounded-xl shadow-sm overflow-hidden">
+                  <div className="p-4 border-b border-[#E2E5DF] flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Stethoscope className="w-4 h-4 text-[#006c48]" />
+                      <h3 className="text-xs font-bold text-[#1E3A2F] uppercase tracking-wider">
+                        Clinical Examination History ({cowHealthRecords.length})
+                      </h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-[#717973]">
+                      GET /api/v1/cows/{cow.tagNumber}/health
+                    </span>
+                  </div>
+
+                  {healthHistoryLoading ? (
+                    <div className="p-6 text-center text-xs text-[#717973] flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-[#1E3A2F]" />
+                      <span>Loading examination records...</span>
+                    </div>
+                  ) : cowHealthRecords.length === 0 ? (
+                    <div className="p-6 text-center">
+                      <p className="text-xs text-[#717973]">
+                        No clinical examination records found for animal {cow.tagNumber}.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-[#F8F9F6] border-b border-[#E2E5DF] text-[#717973] uppercase font-semibold text-[11px] h-9">
+                            <th className="py-2 px-3">Date</th>
+                            <th className="py-2 px-3">Health Status</th>
+                            <th className="py-2 px-3">Diagnosis</th>
+                            <th className="py-2 px-3">Symptoms / Findings</th>
+                            <th className="py-2 px-3 text-center">Temp (°C)</th>
+                            <th className="py-2 px-3 text-center">Weight (kg)</th>
+                            <th className="py-2 px-3">Veterinarian</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#E2E5DF]">
+                          {cowHealthRecords.map((r) => (
+                            <tr key={r.id} className="hover:bg-[#F8F9F6] transition-colors">
+                              <td className="py-2 px-3 font-mono text-[#717973]">{r.recordDate}</td>
+                              <td className="py-2 px-3">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-[#1F2421]">
+                                  {r.healthStatus}
+                                </span>
+                              </td>
+                              <td className="py-2 px-3 font-medium text-[#1E3A2F]">
+                                {r.diagnosis || "--"}
+                              </td>
+                              <td className="py-2 px-3 text-[#717973] truncate max-w-xs">
+                                {r.symptoms || "--"}
+                              </td>
+                              <td className="py-2 px-3 font-mono text-center text-[#717973]">
+                                {r.temperature ? `${r.temperature.toFixed(1)}°` : "--"}
+                              </td>
+                              <td className="py-2 px-3 font-mono text-center text-[#717973]">
+                                {r.weight ? `${r.weight.toFixed(0)} kg` : "--"}
+                              </td>
+                              <td className="py-2 px-3 text-[#717973]">
+                                {r.veterinarianName || "--"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* Quarantine History Table (if any) */}
+                {cowQuarantines.length > 0 && (
+                  <div className="bg-white border border-[#E2E5DF] rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-4 border-b border-[#E2E5DF] flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4 text-red-600" />
+                        <h3 className="text-xs font-bold text-[#1E3A2F] uppercase tracking-wider">
+                          Quarantine Isolation History ({cowQuarantines.length})
+                        </h3>
+                      </div>
+                      <span className="text-[11px] font-mono text-[#717973]">
+                        GET /api/v1/cows/{cow.tagNumber}/quarantine
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-[#F8F9F6] border-b border-[#E2E5DF] text-[#717973] uppercase font-semibold text-[11px] h-9">
+                            <th className="py-2 px-3">Start Date</th>
+                            <th className="py-2 px-3">Release Date</th>
+                            <th className="py-2 px-3">Bay Location</th>
+                            <th className="py-2 px-3">Reason / Diagnosis</th>
+                            <th className="py-2 px-3">Attending Vet</th>
+                            <th className="py-2 px-3 text-right">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#E2E5DF]">
+                          {cowQuarantines.map((q) => (
+                            <tr key={q.id} className="hover:bg-[#F8F9F6] transition-colors">
+                              <td className="py-2 px-3 font-mono text-[#717973]">{q.startDate}</td>
+                              <td className="py-2 px-3 font-mono text-[#717973]">
+                                {q.actualReleaseDate || q.expectedReleaseDate || "--"}
+                              </td>
+                              <td className="py-2 px-3 font-medium text-[#1E3A2F]">{q.location}</td>
+                              <td className="py-2 px-3 text-[#717973]">{q.reason}</td>
+                              <td className="py-2 px-3 text-[#717973]">{q.veterinarianName || "--"}</td>
+                              <td className="py-2 px-3 text-right">
+                                <span
+                                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    q.status === "ACTIVE"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-emerald-100 text-emerald-800"
+                                  }`}
+                                >
+                                  {q.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

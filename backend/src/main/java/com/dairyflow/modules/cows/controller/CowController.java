@@ -40,6 +40,7 @@ public class CowController {
 
     private final CowService cowService;
     private final com.dairyflow.modules.milk.service.MilkService milkService;
+    private final com.dairyflow.modules.health.service.HealthService healthService;
 
     @GetMapping("/{cowId}/milk")
     @PreAuthorize("hasAnyAuthority('COW_VIEW', 'COW_READ', 'MILK_VIEW', 'MILK_READ', 'ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_VETERINARIAN', 'ROLE_WORKER')")
@@ -53,6 +54,57 @@ public class CowController {
         int boundedPage = Math.max(0, page);
         Pageable pageable = PageRequest.of(boundedPage, boundedSize, Sort.by(Sort.Direction.DESC, "productionDate", "shift"));
         return ResponseEntity.ok(ApiResponse.ok(milkService.getCowMilkHistory(cowId, pageable)));
+    }
+
+    @GetMapping("/{cowId}/health")
+    @PreAuthorize("hasAnyAuthority('COW_VIEW', 'COW_READ', 'HEALTH_VIEW', 'HEALTH_READ', 'ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_VETERINARIAN', 'ROLE_WORKER')")
+    @Operation(summary = "Get historical clinical health records for this cow")
+    public ResponseEntity<ApiResponse<PageResponse<com.dairyflow.modules.health.dto.HealthRecordResponse>>> getCowHealthHistory(
+            @PathVariable UUID cowId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        int boundedSize = Math.max(1, Math.min(size, 100));
+        int boundedPage = Math.max(0, page);
+        Pageable pageable = PageRequest.of(boundedPage, boundedSize, Sort.by(Sort.Direction.DESC, "recordDate", "createdAt"));
+        return ResponseEntity.ok(ApiResponse.ok(healthService.getCowHealthHistory(cowId, pageable)));
+    }
+
+    @GetMapping("/{cowId}/treatments")
+    @PreAuthorize("hasAnyAuthority('COW_VIEW', 'COW_READ', 'TREATMENT_VIEW', 'HEALTH_READ', 'ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_VETERINARIAN', 'ROLE_WORKER')")
+    @Operation(summary = "Get historical medical treatments and prescriptions for this cow")
+    public ResponseEntity<ApiResponse<PageResponse<com.dairyflow.modules.health.dto.TreatmentResponse>>> getCowTreatmentHistory(
+            @PathVariable UUID cowId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        int boundedSize = Math.max(1, Math.min(size, 100));
+        int boundedPage = Math.max(0, page);
+        Pageable pageable = PageRequest.of(boundedPage, boundedSize, Sort.by(Sort.Direction.DESC, "startDate", "createdAt"));
+        return ResponseEntity.ok(ApiResponse.ok(healthService.getCowTreatmentHistory(cowId, pageable)));
+    }
+
+    @GetMapping("/{cowId}/quarantine")
+    @PreAuthorize("hasAnyAuthority('COW_VIEW', 'COW_READ', 'QUARANTINE_VIEW', 'HEALTH_READ', 'ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_VETERINARIAN', 'ROLE_WORKER')")
+    @Operation(summary = "Get quarantine isolation records for this cow")
+    public ResponseEntity<ApiResponse<PageResponse<com.dairyflow.modules.health.dto.QuarantineResponse>>> getCowQuarantineHistory(
+            @PathVariable UUID cowId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        int boundedSize = Math.max(1, Math.min(size, 100));
+        int boundedPage = Math.max(0, page);
+        Pageable pageable = PageRequest.of(boundedPage, boundedSize, Sort.by(Sort.Direction.DESC, "startDate", "createdAt"));
+        return ResponseEntity.ok(ApiResponse.ok(healthService.getCowQuarantineHistory(cowId, pageable)));
+    }
+
+    @GetMapping("/{cowId}/withdrawal-status")
+    @PreAuthorize("hasAnyAuthority('COW_VIEW', 'COW_READ', 'WITHDRAWAL_VIEW', 'HEALTH_READ', 'MILK_VIEW', 'ROLE_OWNER', 'ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_VETERINARIAN', 'ROLE_WORKER')")
+    @Operation(summary = "Get antibiotic milk withdrawal status and eligibility for this cow")
+    public ResponseEntity<ApiResponse<com.dairyflow.modules.health.dto.CowWithdrawalStatusResponse>> getCowWithdrawalStatus(
+            @PathVariable UUID cowId
+    ) {
+        return ResponseEntity.ok(ApiResponse.ok(healthService.getCowWithdrawalStatus(cowId)));
     }
 
     @PostMapping

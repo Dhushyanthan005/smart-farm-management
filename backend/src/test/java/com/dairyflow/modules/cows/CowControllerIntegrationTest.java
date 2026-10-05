@@ -71,12 +71,24 @@ class CowControllerIntegrationTest {
     @Autowired
     private com.dairyflow.modules.auth.repository.PasswordResetTokenRepository passwordResetTokenRepository;
 
+    @Autowired(required = false)
+    private com.dairyflow.modules.health.repository.TreatmentRepository treatmentRepository;
+
+    @Autowired(required = false)
+    private com.dairyflow.modules.health.repository.QuarantineRecordRepository quarantineRecordRepository;
+
+    @Autowired(required = false)
+    private com.dairyflow.modules.health.repository.HealthRecordRepository healthRecordRepository;
+
     private String adminToken;
     private String workerToken;
     private String customerToken;
 
     @BeforeEach
     void setUp() {
+        if (treatmentRepository != null) treatmentRepository.deleteAll();
+        if (quarantineRecordRepository != null) quarantineRecordRepository.deleteAll();
+        if (healthRecordRepository != null) healthRecordRepository.deleteAll();
         cowRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         passwordResetTokenRepository.deleteAll();
