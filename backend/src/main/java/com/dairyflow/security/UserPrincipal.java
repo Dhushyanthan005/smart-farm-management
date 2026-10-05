@@ -10,10 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Getter
 @Builder
@@ -23,6 +20,8 @@ public class UserPrincipal implements UserDetails {
     private final UUID id;
     private final String username;
     private final String email;
+    private final String firstName;
+    private final String lastName;
 
     @JsonIgnore
     private final String password;
@@ -35,7 +34,20 @@ public class UserPrincipal implements UserDetails {
         for (RoleEntity role : user.getRoles()) {
             authorities.add(new SimpleGrantedAuthority(role.getName()));
             if (role.getPermissions() != null) {
-                role.getPermissions().forEach(p -> authorities.add(new SimpleGrantedAuthority(p.getName())));
+                role.getPermissions().forEach(p -> {
+                    authorities.add(new SimpleGrantedAuthority(p.getName()));
+                    // Ensure interchangeable aliases for cow permissions
+                    if ("COW_READ".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("COW_VIEW"));
+                    } else if ("COW_WRITE".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("COW_CREATE"));
+                        authorities.add(new SimpleGrantedAuthority("COW_UPDATE"));
+                    } else if ("COW_VIEW".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("COW_READ"));
+                    } else if ("COW_CREATE".equalsIgnoreCase(p.getName()) || "COW_UPDATE".equalsIgnoreCase(p.getName())) {
+                        authorities.add(new SimpleGrantedAuthority("COW_WRITE"));
+                    }
+                });
             }
         }
 
@@ -43,10 +55,27 @@ public class UserPrincipal implements UserDetails {
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
                 .password(user.getPasswordHash())
                 .authorities(authorities)
                 .active("ACTIVE".equalsIgnoreCase(user.getStatus()))
                 .build();
+    }
+
+    public List<String> getRoles() {
+        return authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(auth -> auth.startsWith("ROLE_"))
+                .toList();
+    }
+
+    public List<String> getPermissions() {
+        return authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(auth -> !auth.startsWith("ROLE_"))
+                .distinct()
+                .toList();
     }
 
     @Override

@@ -5,5 +5,7 @@ export * from "./components/cow-filter-toolbar";
 export * from "./components/cow-table";
 export * from "./components/cow-telemetry-footer";
 export * from "./components/cow-profile-modal";
+export * from "./components/cow-form-modal";
+export * from "./utils/cow-adapter";
 export * from "./types/stitch-cow";
 export * from "./data/mock-cows";

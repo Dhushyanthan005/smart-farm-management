@@ -10,7 +10,7 @@ export function CowCard({ cow }: { cow: Cow }) {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold">{cow.tagNumber}</CardTitle>
-          <StatusBadge status={cow.status} />
+          <StatusBadge status={cow.status || cow.healthStatus || cow.lifecycleStatus} />
         </div>
         {cow.name && <p className="text-xs text-gray-500 font-medium">{cow.name}</p>}
       </CardHeader>

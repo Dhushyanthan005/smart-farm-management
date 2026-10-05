@@ -1,11 +1,21 @@
 package com.dairyflow.modules.cows.dto;
 
-import jakarta.validation.constraints.Pattern;
+import com.dairyflow.modules.cows.entity.enums.Breed;
+import com.dairyflow.modules.cows.entity.enums.CowSource;
+import com.dairyflow.modules.cows.entity.enums.Gender;
+import com.dairyflow.modules.cows.entity.enums.HealthStatus;
+import com.dairyflow.modules.cows.entity.enums.LifecycleStatus;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -13,18 +23,51 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateCowRequest {
 
+    @Size(max = 50, message = "RFID identifier must not exceed 50 characters")
+    private String rfid;
+
     @Size(max = 50, message = "Name must not exceed 50 characters")
     private String name;
 
-    @Size(max = 50, message = "Breed must not exceed 50 characters")
-    private String breed;
+    private Breed breed;
 
-    @Pattern(regexp = "^(ACTIVE|LACTATING|DRY|PREGNANT|SICK|SOLD|DECEASED)$", message = "Invalid cow status")
-    private String status;
+    private Gender gender;
+
+    @PastOrPresent(message = "Date of birth cannot be in the future")
+    private LocalDate dateOfBirth;
+
+    @Min(value = 0, message = "Parity must be greater than or equal to 0")
+    private Integer parity;
+
+    private HealthStatus healthStatus;
+
+    private LifecycleStatus lifecycleStatus;
+
+    private CowSource source;
+
+    @Size(max = 50, message = "Barn name must not exceed 50 characters")
+    private String barn;
+
+    @Size(max = 50, message = "Pen name must not exceed 50 characters")
+    private String pen;
+
+    @PositiveOrZero(message = "Expected milk capacity must be positive or zero")
+    private Double expectedMilkCapacity;
+
+    @Size(max = 30, message = "Current milk status must not exceed 30 characters")
+    private String currentMilkStatus;
+
+    private UUID motherId;
+    private UUID fatherId;
+
+    private LocalDate acquisitionDate;
+
+    @Size(max = 100, message = "Acquisition place must not exceed 100 characters")
+    private String acquisitionPlace;
 
     @Size(max = 255, message = "Photo URL must not exceed 255 characters")
     private String photoUrl;
 
-    @Size(max = 500, message = "Notes must not exceed 500 characters")
+    @Size(max = 1000, message = "Notes must not exceed 1000 characters")
     private String notes;
 }

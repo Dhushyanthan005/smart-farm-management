@@ -1,3 +1,5 @@
+import { Cow } from "@/types/cow";
+
 export type LactationStage = "Early" | "Peak" | "Mid" | "Late" | "Dry";
 
 export type CowHealthStatus = "Healthy" | "Observation" | "Quarantined" | "Withdrawal";
@@ -25,4 +27,5 @@ export interface StitchCow {
   statusDot: "green" | "amber" | "red" | "gray";
   isWithheld?: boolean;
   estrusAlert?: boolean;
+  rawCow?: Cow;
 }

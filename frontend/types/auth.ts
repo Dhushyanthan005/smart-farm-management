@@ -13,18 +13,37 @@ export interface User {
   email: string;
   firstName?: string;
   lastName?: string;
+  phoneNumber?: string;
   roles: Role[];
-  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+  permissions: string[];
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "PENDING_VERIFICATION";
+}
+
+export interface UserProfileResponse {
+  id: string;
+  username: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  status: string;
+  roles: Role[];
+  permissions: string[];
 }
 
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   tokenType: string;
+  expiresIn?: number;
   userId: string;
   username: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
   roles: Role[];
+  permissions?: string[];
+  user?: UserProfileResponse;
 }
 
 export interface AuthState {

@@ -11,14 +11,14 @@ import {
   Stethoscope,
   Building2,
   AlertTriangle,
-  Flame,
   Gauge,
+  LogOut,
 } from "lucide-react";
 import { useAuth } from "@/providers/auth-provider";
 
 export function Header() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
@@ -27,6 +27,16 @@ export function Header() {
       router.push(`/cows?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  const initials = user?.username ? user.username.substring(0, 2).toUpperCase() : "DF";
+  const displayName = user?.firstName
+    ? `${user.firstName} ${user.lastName || ""}`.trim()
+    : user?.username || "Farm User";
+  const primaryRole = user?.roles?.[0]?.replace("ROLE_", "") || "STAFF";
 
   return (
     <header className="flex justify-between items-center w-full px-6 h-14 bg-white border-b border-[#E2E5DF] shadow-sm flex-shrink-0 z-20 sticky top-0">
@@ -119,11 +129,27 @@ export function Header() {
           </button>
         </div>
 
-        {/* User Profile Avatar */}
-        <div className="flex items-center gap-2 pl-1">
+        {/* User Profile Info & Sign Out */}
+        <div className="flex items-center gap-2.5 pl-2 border-l border-[#E2E5DF]">
           <div className="w-8 h-8 rounded-full bg-[#1E3A2F] text-white border border-[#E2E5DF] flex items-center justify-center font-bold text-xs font-headline">
-            {user?.username ? user.username.substring(0, 2).toUpperCase() : "GM"}
+            {initials}
           </div>
+          <div className="hidden md:flex flex-col text-left leading-tight">
+            <span className="text-xs font-semibold text-[#1F2421] truncate max-w-[130px]">
+              {displayName}
+            </span>
+            <span className="text-[10px] text-gray-500 font-medium">
+              {primaryRole}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Sign out of DairyFlow"
+            className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors ml-1"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </header>

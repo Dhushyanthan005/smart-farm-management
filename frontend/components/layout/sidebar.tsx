@@ -4,6 +4,9 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
+import { Role } from "@/types/auth";
+import { useAuth } from "@/providers/auth-provider";
+import { Can } from "@/components/auth/can";
 import {
   LayoutDashboard,
   Beef,
@@ -32,29 +35,43 @@ interface NavItem {
   icon: React.ElementType;
   badge?: string;
   badgeVariant?: "danger" | "default";
+  permission?: string | string[];
+  roles?: Role[];
 }
 
 const PRIMARY_NAV: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Herd Management", href: "/cows", icon: Beef },
-  { title: "Milk Production", href: "/milk", icon: Droplets },
-  { title: "Health & Vet", href: "/health", icon: HeartPulse, badge: "2", badgeVariant: "danger" },
-  { title: "Vaccinations", href: "/vaccinations", icon: Syringe },
-  { title: "Breeding & AI", href: "/breeding", icon: GitFork },
-  { title: "Feed & Ration", href: "/feed", icon: Wheat },
-  { title: "Inventory", href: "/inventory", icon: Boxes },
-  { title: "Financial Ledger", href: "/finance", icon: Receipt },
-  { title: "Customers", href: "/customers", icon: Users },
-  { title: "Subscriptions", href: "/subscriptions", icon: CalendarCheck },
-  { title: "Orders & Sales", href: "/orders", icon: ShoppingBag },
-  { title: "Deliveries", href: "/deliveries", icon: Truck },
-  { title: "Staff & Shifts", href: "/staff", icon: UserCheck },
-  { title: "Reports & Logs", href: "/reports", icon: BarChart3 },
+  { title: "Herd Management", href: "/cows", icon: Beef, permission: ["COW_READ", "COW_VIEW"] },
+  { title: "Milk Production", href: "/milk", icon: Droplets, permission: ["MILK_READ"] },
+  { title: "Health & Vet", href: "/health", icon: HeartPulse, badge: "2", badgeVariant: "danger", permission: ["HEALTH_READ"] },
+  { title: "Vaccinations", href: "/vaccinations", icon: Syringe, permission: ["VACCINATION_READ"] },
+  { title: "Breeding & AI", href: "/breeding", icon: GitFork, permission: ["BREEDING_READ"] },
+  { title: "Feed & Ration", href: "/feed", icon: Wheat, permission: ["FEED_READ"] },
+  { title: "Inventory", href: "/inventory", icon: Boxes, permission: ["INVENTORY_READ"] },
+  { title: "Financial Ledger", href: "/finance", icon: Receipt, permission: ["FINANCE_READ"] },
+  { title: "Customers", href: "/customers", icon: Users, permission: ["CUSTOMER_READ"] },
+  { title: "Subscriptions", href: "/subscriptions", icon: CalendarCheck, permission: ["ORDER_READ", "CUSTOMER_READ"] },
+  { title: "Orders & Sales", href: "/orders", icon: ShoppingBag, permission: ["ORDER_READ"] },
+  { title: "Deliveries", href: "/deliveries", icon: Truck, permission: ["DELIVERY_READ"] },
+  { title: "Staff & Shifts", href: "/staff", icon: UserCheck, permission: ["USER_MANAGE"] },
+  { title: "Reports & Logs", href: "/reports", icon: BarChart3, permission: ["REPORTS_VIEW"] },
   { title: "Notifications", href: "/notifications", icon: Bell },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { hasPermission, hasRole } = useAuth();
+
+  // Filter navigation items based on user RBAC permissions
+  const visibleNavItems = PRIMARY_NAV.filter((item) => {
+    if (item.roles && !hasRole(item.roles)) {
+      return false;
+    }
+    if (item.permission && !hasPermission(item.permission)) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <aside className="w-60 h-screen flex flex-col justify-between p-3 border-r border-[#E2E5DF] bg-[#F4F6F2] flex-shrink-0 select-none fixed left-0 top-0 z-30">
@@ -74,20 +91,22 @@ export function Sidebar() {
           </div>
         </div>
 
-        {/* Quick Bulk Entry CTA */}
-        <Link href="/milk">
-          <button
-            type="button"
-            className="w-full bg-white border border-[#E2E5DF] hover:border-[#1E3A2F] text-[#1E3A2F] hover:bg-[#EAECE7] text-xs font-semibold rounded-lg py-1.5 px-3 flex items-center justify-center gap-2 shadow-sm transition-all duration-150 active:scale-[0.98]"
-          >
-            <PlusCircle className="w-4 h-4 text-[#4D6A42]" />
-            <span>Quick Bulk Entry</span>
-          </button>
-        </Link>
+        {/* Quick Bulk Entry CTA - Protected by MILK_WRITE */}
+        <Can permission={["MILK_WRITE", "ROLE_OWNER", "ROLE_ADMIN", "ROLE_MANAGER", "ROLE_WORKER"]}>
+          <Link href="/milk">
+            <button
+              type="button"
+              className="w-full bg-white border border-[#E2E5DF] hover:border-[#1E3A2F] text-[#1E3A2F] hover:bg-[#EAECE7] text-xs font-semibold rounded-lg py-1.5 px-3 flex items-center justify-center gap-2 shadow-sm transition-all duration-150 active:scale-[0.98]"
+            >
+              <PlusCircle className="w-4 h-4 text-[#4D6A42]" />
+              <span>Quick Bulk Entry</span>
+            </button>
+          </Link>
+        </Can>
 
         {/* Main Navigation Tabs */}
         <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-270px)] pr-1">
-          {PRIMARY_NAV.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(`${item.href}/`));
 
@@ -140,13 +159,16 @@ export function Sidebar() {
           </div>
         </div>
 
-        <Link
-          href="/settings"
-          className="text-gray-600 hover:bg-[#EAECE7] hover:text-[#1F2421] rounded-lg px-3 py-1.5 flex items-center gap-2.5 text-xs font-medium transition-colors"
-        >
-          <Settings className="w-4 h-4 text-gray-500" />
-          <span>Facility Settings</span>
-        </Link>
+        <Can permission={["SYSTEM_CONFIG", "USER_MANAGE"]}>
+          <Link
+            href="/settings"
+            className="text-gray-600 hover:bg-[#EAECE7] hover:text-[#1F2421] rounded-lg px-3 py-1.5 flex items-center gap-2.5 text-xs font-medium transition-colors"
+          >
+            <Settings className="w-4 h-4 text-gray-500" />
+            <span>Facility Settings</span>
+          </Link>
+        </Can>
+
         <a
           href="#support"
           className="text-gray-600 hover:bg-[#EAECE7] hover:text-[#1F2421] rounded-lg px-3 py-1.5 flex items-center gap-2.5 text-xs font-medium transition-colors"

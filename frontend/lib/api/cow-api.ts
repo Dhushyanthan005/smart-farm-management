@@ -1,10 +1,29 @@
 import { apiClient } from "./client";
 import { ApiResponse, PageResponse } from "@/types/api";
-import { Cow, CreateCowInput, UpdateCowInput } from "@/types/cow";
+import { Cow, CowFilterParams, CowStats, CreateCowInput, UpdateCowInput } from "@/types/cow";
 
 export const cowApi = {
-  list: (page = 0, size = 20, status?: string): Promise<ApiResponse<PageResponse<Cow>>> => {
-    return apiClient.get<ApiResponse<PageResponse<Cow>>>("/cows", { page, size, status });
+  list: (params: CowFilterParams = {}): Promise<ApiResponse<PageResponse<Cow>>> => {
+    const queryParams: Record<string, string | number | undefined> = {};
+    if (params.page !== undefined) queryParams.page = params.page;
+    if (params.size !== undefined) queryParams.size = params.size;
+    if (params.sort) queryParams.sort = params.sort;
+    if (params.search?.trim()) queryParams.search = params.search.trim();
+    if (params.healthStatus) queryParams.healthStatus = params.healthStatus;
+    if (params.lifecycleStatus) queryParams.lifecycleStatus = params.lifecycleStatus;
+    if (params.breed) queryParams.breed = params.breed;
+    if (params.gender) queryParams.gender = params.gender;
+    if (params.barn?.trim()) queryParams.barn = params.barn.trim();
+    if (params.pen?.trim()) queryParams.pen = params.pen.trim();
+    if (params.parity !== undefined) queryParams.parity = params.parity;
+    if (params.minParity !== undefined) queryParams.minParity = params.minParity;
+    if (params.stage?.trim()) queryParams.stage = params.stage.trim();
+
+    return apiClient.get<ApiResponse<PageResponse<Cow>>>("/cows", queryParams);
+  },
+
+  getStats: (): Promise<ApiResponse<CowStats>> => {
+    return apiClient.get<ApiResponse<CowStats>>("/cows/stats");
   },
 
   getById: (id: string): Promise<ApiResponse<Cow>> => {
@@ -12,7 +31,7 @@ export const cowApi = {
   },
 
   getByTag: (tagNumber: string): Promise<ApiResponse<Cow>> => {
-    return apiClient.get<ApiResponse<Cow>>(`/cows/tag/${tagNumber}`);
+    return apiClient.get<ApiResponse<Cow>>(`/cows/tag/${encodeURIComponent(tagNumber)}`);
   },
 
   create: (data: CreateCowInput): Promise<ApiResponse<Cow>> => {

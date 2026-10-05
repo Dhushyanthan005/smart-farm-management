@@ -16,10 +16,19 @@ public class AuthResponse {
 
     private String accessToken;
     private String refreshToken;
+
     @Builder.Default
     private String tokenType = "Bearer";
+
+    private Long expiresIn;
+
     private UUID userId;
     private String username;
     private String email;
+    private String firstName;
+    private String lastName;
     private List<String> roles;
+    private List<String> permissions;
+
+    private UserProfileResponse user;
 }

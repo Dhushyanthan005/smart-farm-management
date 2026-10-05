@@ -20,6 +20,7 @@ import {
   FlaskConical,
 } from "lucide-react";
 import { StitchCow } from "../types/stitch-cow";
+import { useCow } from "../hooks/use-cows";
 
 interface CowProfileModalProps {
   cow: StitchCow | null;
@@ -30,6 +31,10 @@ interface CowProfileModalProps {
 
 export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProfileModalProps) {
   const [activeTab, setActiveTab] = useState<string>("Overview");
+
+  // Fetch live cow details from backend API
+  const { data: liveCowResponse } = useCow(isOpen && cow ? cow.id : undefined);
+  const liveCow = liveCowResponse?.data || cow?.rawCow;
 
   if (!isOpen || !cow) return null;
 
@@ -127,18 +132,28 @@ export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProf
                     </span>
                     <span className="text-[#E2E5DF]">•</span>
                     <span>
-                      <strong>DOB:</strong> Mar 14, 2021 ({cow.age})
+                      <strong>DOB:</strong> {liveCow?.dateOfBirth ?? "Mar 14, 2021"} ({liveCow?.age || cow.age})
                     </span>
                   </div>
 
-                  <div className="text-[11px] text-[#717973] flex items-center gap-2 mt-0.5">
+                  <div className="text-[11px] text-[#717973] flex items-center gap-2 mt-0.5 flex-wrap">
                     <span>
-                      Sire: <em>Sandy-Valley Batman-ET</em>
+                      Tag: <em>{liveCow?.tagNumber || cow.tagNumber}</em>
                     </span>
                     <span>|</span>
                     <span>
-                      Dam: <em>Green-Val Aurora Dream (Parity 5)</em>
+                      RFID: <em>{liveCow?.rfid || cow.rfid || "Not assigned"}</em>
                     </span>
+                    <span>|</span>
+                    <span>
+                      Source: <em>{liveCow?.source || "BORN"}</em>
+                    </span>
+                    {liveCow?.notes && (
+                      <>
+                        <span>|</span>
+                        <span className="truncate max-w-xs">Notes: <em>{liveCow.notes}</em></span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -219,6 +234,20 @@ export function CowProfileModal({ cow, isOpen, onClose, onLogVetCheck }: CowProf
 
           {/* Bento Grid Detailed View */}
           <div className="grid grid-cols-12 gap-4 pb-2">
+            {activeTab !== "Overview" && (
+              <div className="col-span-12 p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                  <span>
+                    <strong>{activeTab} Module Boundary:</strong> Live session logs and automated sensors for animal <strong>{cow.tagNumber}</strong> will connect in Phase 5 ({activeTab} module integration).
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded">
+                  Future Module
+                </span>
+              </div>
+            )}
+
             {/* Module 1: Lactation Curve Chart (8 Cols) */}
             <div className="col-span-12 lg:col-span-8 bg-white border border-[#E2E5DF] rounded-xl p-5 shadow-sm flex flex-col justify-between">
               <div>
